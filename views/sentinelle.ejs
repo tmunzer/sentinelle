@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-us" xml:lang="en-us">
+<head>
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+
+    <title>MIB Preview</title>
+    <!-- JQuery -->
+    <script type='text/javascript' src='./js/jquery-2.1.1.min.js'></script>
+    <script type='text/javascript' src='./js/bootstrap.min.js'></script>
+    <script type='text/javascript' src='./js/slidebars.js'></script>
+    <script type='text/javascript' src='./js/jquery.autocomplete.js'></script>
+    <script type='text/javascript' src='./js/FaviconAwesome.js'></script>
+    <link rel="stylesheet" href="./css/slidebars.css" type="text/css">
+    <link rel="stylesheet" href="./css/font-awesome.min.css" type="text/css">
+    <link rel="stylesheet" href="./css/bootstrap.min.css" type="text/css">
+    <link rel="stylesheet" href="./css/sentinelle.css" type="text/css">
+</head>
+<body id="top">
+<nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container" style="width:80%" >
+        <!-- Logo -->
+        <div id="logo" class="nav navbar-nav navbar-left" style="padding-top: 5px;">
+            <i class="fa fa-3x fa-connectdevelop"></i>
+            <a href="#">MIB Preview</a>
+        </div>
+        <!-- /#logo -->
+
+        <!-- Menu -->
+        <ul class="nav navbar-nav navbar-right">
+            <li id="nav_display_preview">
+                <a href="#" onclick="select_tab('display_home')">
+                    <i class="fa fa-list fa-lg"></i>
+                    <span> Home</span>
+                </a>
+            </li>
+            <li id="nav_display_search">
+                <a href="#" onclick="select_tab('display_ap')">
+                    <i class="fa fa-search fa-lg"></i>
+                    <span> AP Details</span>
+                </a>
+            </li>
+            <li id="nav_display_detail">
+                <a href="#" onclick="select_tab('display_sta')">
+                    <i class="fa fa-info-circle fa-lg"></i>
+                    <span> STA Details</span>
+                </a>
+            </li>
+            <li id="nav_display_detail">
+                <a href="#" onclick="select_tab('display_config')">
+                    <i class="fa fa-info-circle fa-lg"></i>
+                    <span> Config</span>
+                </a>
+            </li>
+            <li id="nav_about">
+                <a href="#" onclick="select_tab('about')">
+                    <i class="fa fa-question fa-lg"></i>
+                    <span> About</span>
+                </a>
+            </li>
+            <li>
+                <a id="top-arrow" href="#top">^
+                    <span> Top</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+<!-- main container -->
+<div  id="sb-site">
+    <!-- mib viewer - this section will display the article to load MIB files -->
+    <section class="sb-site-content" id="mib_display_select">
+        <article style="display: flex;">
+            <div style="width: 40%">
+                <span style="margin-left: 5px;">Start/Stop capture</span>
+                <input style="margin-top: 5px;" type="button" id="clear_mib_selection" value="start_stop">
+
+            </div>
+        </article>
+    </section>
+    <!-- mib viewer - this section will display the MIB files details -->
+    <section class="sb-site-content" id="mib_display_detail" hidden="hidden">
+        <div id="mib_details">
+        </div>
+    </section>
+    <!-- mib viewer - this section will display MIB tree -->
+    <section class="sb-site-content" id="mib_display_preview">
+        <article style="display: flex">
+
+        </article>
+        <div id="mib_preview">
+        </div>
+    </section>
+    <!-- mib viewer - this section will display the About article -->
+    <section class="sb-site-content" id="mib_about" hidden="hidden">
+        <article>
+
+        </article>
+    </section>
+    <!-- mib viewer - this section will display search tool -->
+    <section class="sb-site-content" id="mib_display_search" hidden="hidden">
+        <article style="display: flex">
+
+        </article>
+        <div id='mib_search'>
+        </div>
+    </section>
+
+</div>
+<!-- mib viewer - this is the right pane to display infos  -->
+<nav id="info_details" class="sb-slidebar sb-right sb-style-push">
+    <div id="info_details_content" style="margin-top: 100px;">
+    </div>
+    <div>
+        <a class='btn menu-link' id="sb-close" style='float: left; padding-right: 10px; padding-top: 10px;'>Close <i
+                    class='fa fa-times-circle'></i></a>
+    </div>
+</nav>
+<script> FaviconAwesome('fa-connectdevelop', '#0093D1'); </script>
+</body>
+</html>
