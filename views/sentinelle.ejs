@@ -13,12 +13,17 @@
     <script type='text/javascript' src='./js/slidebars.js'></script>
     <script type='text/javascript' src='./js/jquery.autocomplete.js'></script>
     <script type='text/javascript' src='./js/FaviconAwesome.js'></script>
+    <script type='text/javascript' src="/socket.io/socket.io.js"></script>
     <link rel="stylesheet" href="./css/slidebars.css" type="text/css">
     <link rel="stylesheet" href="./css/font-awesome.min.css" type="text/css">
     <link rel="stylesheet" href="./css/bootstrap.min.css" type="text/css">
     <link rel="stylesheet" href="./css/sentinelle.css" type="text/css">
 </head>
 <body id="top">
+<script>
+    var socket = io.connect('http://10.0.10.3:80');
+
+</script>
 <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
     <div class="container" style="width:80%" >
         <!-- Logo -->
