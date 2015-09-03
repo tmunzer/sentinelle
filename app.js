@@ -15,6 +15,10 @@ app.get('/', function(req, res) {
 
 io.sockets.on('connection', function(socket) {
     console.log('new connection');
+    var list = sentinelle.get_access_points();
+    for (var ap in list){
+        socket.emit("new_access_point", list[ap]);
+    }
 });
 
 sentinelle.capture();

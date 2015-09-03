@@ -4,6 +4,8 @@ var pcap = require("./pcap"),
 var sys = require("sys");
 var EventEmitter = require('events').EventEmitter;
 
+var accessPointsList = new Array();
+
 
 sentinelle_capture = function(){
 	pcap_session.on("packet", function(raw_packet){
@@ -23,7 +25,6 @@ sentinelle_capture = function(){
 	});
 };
 
-var accessPointsList = [];
 
 get_access_points = function(){
 	return accessPointsList;
@@ -106,8 +107,8 @@ access_point = function(payload){
 				}
 			}
 		}
-		console.log(accessPoint);
-		app.io.sockets.emit('test', 'accessPoint');
+		//console.log(accessPoint);
+		app.io.sockets.emit('new_access_point', accessPoint);
 		accessPointsList[BSSID]=accessPoint;
 	}
 };

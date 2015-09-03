@@ -95,8 +95,12 @@ function PacketWithHeader(buf, header, link_type) {
 }
 
 PcapSession.prototype.on_packet_ready = function () {
-    var full_packet = new PacketWithHeader(this.buf, this.header, this.link_type);
-    this.emit("packet", full_packet);
+    try {
+        var full_packet = new PacketWithHeader(this.buf, this.header, this.link_type);
+        this.emit("packet", full_packet);
+    } catch (e) {
+        console.log("buffer error");
+    }
 };
 
 PcapSession.prototype.close = function () {

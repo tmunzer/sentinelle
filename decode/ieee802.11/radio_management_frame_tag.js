@@ -21,7 +21,7 @@ RadioManagementFrameTag.prototype.decode = function decode(raw_packet, offset) {
             break;
         case 1:
             this.type = "rates";
-            this.rates = this.decode_rates(raw_packet.slice(offset, offset + this.length));
+            this.rates = this.decode_rates(this.value);
             break;
         case 3:
             this.type = "channel";
@@ -30,15 +30,22 @@ RadioManagementFrameTag.prototype.decode = function decode(raw_packet, offset) {
         case 5:
             this.type = "TIM"; //Traffic Indicator Map
             break;
+        case 32:
+            this.type = "power_constraint"; //802.11h
+            break;
+        case 33:
+            this.type = "mobility_domain"; //802.11r
+            break;
         case 42:
             this.type = "ERP"; //Extended Rates PHY
             break;
         case 48:
             this.type = "RSN"; //Robust Security Network
+            this.capabilities = this.decode_capabilities(this.value);
             break;
         case 50:
             this.type = "extended_rates";
-            this.rates = this.decode_rates(raw_packet.slice(offset, offset + this.length));
+            this.extended_rates = this.decode_rates(this.value);
             break;
         case 221:
             this.type = "vendor_specific";
@@ -51,7 +58,7 @@ RadioManagementFrameTag.prototype.decode = function decode(raw_packet, offset) {
             break;
         case 7:
             this.type = "Country";
-            this.country = this.decode_country(raw_packet.slice(offset, offset + this.length));
+            this.country = this.decode_country(this.value);
             break;
         default:
             this.type = "unknown";
@@ -82,11 +89,42 @@ RadioManagementFrameTag.prototype.decode_rates = function(raw_data){
     return rates_list;
 };
 
+RadioManagementFrameTag.prototype.decode_capabilities= function(raw_data) {
+    var offset = 0;
+    var rsn_ver = parseInt(raw_data.slice(offset , offset + 1).toString('hex'));
+
+    offset = offset + 2;
+    var group_cipher_suite_type = raw_data.slice(offset , offset + 4).toString('hex');
+
+    offset = offset + 4;
+    var pairwise_cipher_suite_count = parseInt(raw_data.slice(offset, offset + 1).toString('hex'));
+
+    offset = offset + 2;
+    var pairwise_cipher_suite_list = [];
+    for (var ii = 0; ii < pairwise_cipher_suite_count; ii++){
+        pairwise_cipher_suite_list.push(raw_data.slice(offset, offset + 4 ).toString('hex'));
+        offset = offset + 4;
+    }
+    var auth_key_mgmt_count = parseInt(raw_data.slice(offset, offset + 1).toString('hex'));
+
+    offset = offset + 2;
+    var auth_key_mgmt_list = [];
+    for (var ii = 0; ii < auth_key_mgmt_count; ii++) {
+        auth_key_mgmt_list.push(raw_data.slice(offset, offset + 4 ).toString('hex'));
+        offset = offset + 4;
+    }
+    var rsn_capabilities = raw_data.slice(offset, offset + 2).toString('hex');
+    return {'version':rsn_ver, 'group_cipher_suite_type': group_cipher_suite_type,
+    'pairwise_cipher_suite_count': pairwise_cipher_suite_count, 'pairwise_cipher_suite_list': pairwise_cipher_suite_list,
+    'auth_key_mgmt_count': auth_key_mgmt_count, 'auth_key_mgmt_list': auth_key_mgmt_list,
+    'rsn_capabilities': rsn_capabilities};
+};
+
 RadioManagementFrameTag.prototype.decode_country = function(raw_data){
     //TODO
     //Improve this decode function to get the channels list and parameters
     var country = raw_data.slice(0, 2);
-    return country.toString("ascii", 0, country.length);
+    return country.toString();
 };
 
 

@@ -6,7 +6,7 @@
     <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
     <meta content="utf-8" http-equiv="encoding">
 
-    <title>MIB Preview</title>
+    <title>Sentinelle</title>
     <!-- JQuery -->
     <script type='text/javascript' src='./js/jquery-2.1.1.min.js'></script>
     <script type='text/javascript' src='./js/bootstrap.min.js'></script>
@@ -21,15 +21,55 @@
 </head>
 <body id="top">
 <script>
+    var accessPointsList = [];
+    var associationList = [];
+    var stationsList = [];
     var socket = io.connect('http://10.0.10.3:80');
+    socket.on('new_access_point', function(access_point) {
+        accessPointsList.push(access_point);
+        display_infra_ap(access_point);
 
+    });
+
+    function display_infra_ap(access_point){
+        $("#article_infra").append("<div class='infra_ap'>"
+                + "BSSID: " + convert_mac(access_point["BSSID"]) + "<br>"
+                + "SSID: " + access_point["SSID"] + "<br>"
+                + "Channel: " + access_point["channel"] + "<br>"
+                + "Country: " + access_point["country"] + "<br>"
+                + "Rates: " + access_point["rates"] + "<br>"
+                + "Extended Rates: " + access_point["extended_rates"] + "<br>"
+                + "Raw Data: " +access_point["beacon"] + "<br>"
+                + "</div>"
+        );
+  /*      console.log(access_point["BSSID"]);
+        console.log(access_point['beacon']['tags']);
+        for (var tag in access_point['beacon']['tags']){
+            if (access_point['beacon']['tags'][tag].hasOwnProperty("typeId")){
+                switch (access_point['beacon']['tags'][tag]["typeId"]) {
+                    case 0:
+                            var value = access_point['beacon']['tags'][tag]['value'].slice(0, access_point['beacon']['tags'][tag]['value'].length);
+                        console.log(value.toString());
+                }
+            }
+
+        }*/
+    }
+
+    function convert_mac(mac_param){
+        var mac_result = "";;
+        for (var mbyte in mac_param){
+            mac_result += parseInt(mac_param[mbyte]).toString(16);
+        }
+        return mac_result;
+    }
 </script>
 <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
     <div class="container" style="width:80%" >
         <!-- Logo -->
         <div id="logo" class="nav navbar-nav navbar-left" style="padding-top: 5px;">
             <i class="fa fa-3x fa-connectdevelop"></i>
-            <a href="#">MIB Preview</a>
+            <a href="#">Sentinelle</a>
         </div>
         <!-- /#logo -->
 
@@ -37,25 +77,25 @@
         <ul class="nav navbar-nav navbar-right">
             <li id="nav_display_preview">
                 <a href="#" onclick="select_tab('display_home')">
-                    <i class="fa fa-list fa-lg"></i>
-                    <span> Home</span>
+                    <i class="fa fa-sitemap fa-lg"></i>
+                    <span> Infrastructure</span>
                 </a>
             </li>
             <li id="nav_display_search">
                 <a href="#" onclick="select_tab('display_ap')">
-                    <i class="fa fa-search fa-lg"></i>
+                    <i class="fa fa-rss fa-lg"></i>
                     <span> AP Details</span>
                 </a>
             </li>
             <li id="nav_display_detail">
                 <a href="#" onclick="select_tab('display_sta')">
-                    <i class="fa fa-info-circle fa-lg"></i>
+                    <i class="fa fa-laptop fa-lg"></i>
                     <span> STA Details</span>
                 </a>
             </li>
             <li id="nav_display_detail">
                 <a href="#" onclick="select_tab('display_config')">
-                    <i class="fa fa-info-circle fa-lg"></i>
+                    <i class="fa fa-gears fa-lg"></i>
                     <span> Config</span>
                 </a>
             </li>
@@ -76,7 +116,7 @@
 <!-- main container -->
 <div  id="sb-site">
     <!-- mib viewer - this section will display the article to load MIB files -->
-    <section class="sb-site-content" id="mib_display_select">
+    <section class="sb-site-content" id="section_action">
         <article style="display: flex;">
             <div style="width: 40%">
                 <span style="margin-left: 5px;">Start/Stop capture</span>
@@ -86,17 +126,28 @@
         </article>
     </section>
     <!-- mib viewer - this section will display the MIB files details -->
-    <section class="sb-site-content" id="mib_display_detail" hidden="hidden">
-        <div id="mib_details">
-        </div>
+    <section class="sb-site-content" id="section_infra">
+        <article id="article_infra">
+
+        </article>
     </section>
     <!-- mib viewer - this section will display MIB tree -->
-    <section class="sb-site-content" id="mib_display_preview">
+    <section class="sb-site-content" id="section_ap" hidden="hidden">
         <article style="display: flex">
 
         </article>
-        <div id="mib_preview">
-        </div>
+    </section>
+    <!-- mib viewer - this section will display MIB tree -->
+    <section class="sb-site-content" id="section_sta" hidden="hidden">
+        <article style="display: flex">
+
+        </article>
+    </section>
+    <!-- mib viewer - this section will display MIB tree -->
+    <section class="sb-site-content" id="section_conf" hidden="hidden">
+        <article style="display: flex">
+
+        </article>
     </section>
     <!-- mib viewer - this section will display the About article -->
     <section class="sb-site-content" id="mib_about" hidden="hidden">
@@ -109,8 +160,7 @@
         <article style="display: flex">
 
         </article>
-        <div id='mib_search'>
-        </div>
+
     </section>
 
 </div>
@@ -124,5 +174,28 @@
     </div>
 </nav>
 <script> FaviconAwesome('fa-connectdevelop', '#0093D1'); </script>
+<script>
+    var tabs = ["display_search", "display_preview", "display_detail", "about"];
+    function select_tab(tab_name) {
+        mySlidebars.slidebars.close();
+        if (tab_name.indexOf("display_") < 0) {
+            $("#mib_display_select").hide();
+        } else {
+            $("#mib_display_select").show();
+        }
+        for (var i in tabs) {
+            if (tabs.hasOwnProperty(i)) {
+                if (tabs[i] == tab_name) {
+                    $("#mib_" + tabs[i]).show();
+                    document.getElementById("nav_" + tabs[i]).className = "nav_selected";
+                } else {
+                    $("#mib_" + tabs[i]).hide();
+                    document.getElementById("nav_" + tabs[i]).className = "";
+                }
+            }
+        }
+
+    }
+</script>
 </body>
 </html>
