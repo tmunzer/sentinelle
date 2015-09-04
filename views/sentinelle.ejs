@@ -20,50 +20,6 @@
     <link rel="stylesheet" href="./css/sentinelle.css" type="text/css">
 </head>
 <body id="top">
-<script>
-    var accessPointsList = [];
-    var associationList = [];
-    var stationsList = [];
-    var socket = io.connect('http://10.0.10.3:80');
-    socket.on('new_access_point', function(access_point) {
-        accessPointsList.push(access_point);
-        display_infra_ap(access_point);
-
-    });
-
-    function display_infra_ap(access_point){
-        $("#article_infra").append("<div class='infra_ap'>"
-                + "BSSID: " + convert_mac(access_point["BSSID"]) + "<br>"
-                + "SSID: " + access_point["SSID"] + "<br>"
-                + "Channel: " + access_point["channel"] + "<br>"
-                + "Country: " + access_point["country"] + "<br>"
-                + "Rates: " + access_point["rates"] + "<br>"
-                + "Extended Rates: " + access_point["extended_rates"] + "<br>"
-                + "Raw Data: " +access_point["beacon"] + "<br>"
-                + "</div>"
-        );
-  /*      console.log(access_point["BSSID"]);
-        console.log(access_point['beacon']['tags']);
-        for (var tag in access_point['beacon']['tags']){
-            if (access_point['beacon']['tags'][tag].hasOwnProperty("typeId")){
-                switch (access_point['beacon']['tags'][tag]["typeId"]) {
-                    case 0:
-                            var value = access_point['beacon']['tags'][tag]['value'].slice(0, access_point['beacon']['tags'][tag]['value'].length);
-                        console.log(value.toString());
-                }
-            }
-
-        }*/
-    }
-
-    function convert_mac(mac_param){
-        var mac_result = "";;
-        for (var mbyte in mac_param){
-            mac_result += parseInt(mac_param[mbyte]).toString(16);
-        }
-        return mac_result;
-    }
-</script>
 <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
     <div class="container" style="width:80%" >
         <!-- Logo -->
@@ -75,25 +31,25 @@
 
         <!-- Menu -->
         <ul class="nav navbar-nav navbar-right">
-            <li id="nav_display_preview">
-                <a href="#" onclick="select_tab('display_home')">
+            <li id="nav_display_infra" class="nav_selected">
+                <a href="#" onclick="select_tab('display_infra')">
                     <i class="fa fa-sitemap fa-lg"></i>
                     <span> Infrastructure</span>
                 </a>
             </li>
-            <li id="nav_display_search">
+            <li id="nav_display_ap">
                 <a href="#" onclick="select_tab('display_ap')">
-                    <i class="fa fa-rss fa-lg"></i>
+                    <i class="fa fa-wifi fa-lg"></i>
                     <span> AP Details</span>
                 </a>
             </li>
-            <li id="nav_display_detail">
+            <li id="nav_display_sta">
                 <a href="#" onclick="select_tab('display_sta')">
                     <i class="fa fa-laptop fa-lg"></i>
                     <span> STA Details</span>
                 </a>
             </li>
-            <li id="nav_display_detail">
+            <li id="nav_display_config">
                 <a href="#" onclick="select_tab('display_config')">
                     <i class="fa fa-gears fa-lg"></i>
                     <span> Config</span>
@@ -119,44 +75,50 @@
     <section class="sb-site-content" id="section_action">
         <article style="display: flex;">
             <div style="width: 40%">
-                <span style="margin-left: 5px;">Start/Stop capture</span>
-                <input style="margin-top: 5px;" type="button" id="clear_mib_selection" value="start_stop">
 
+                <span style="margin-left: 5px;">Sensor: </span>
+                <a href="#" onclick="start_stop()">
+                    <i id="sentinelle_action" class="fa fa-toggle-off fa-lg"></i>
+                </a>
+                <br>
+                <span style="margin-left: 5px;">Status: </span>
+                <span id="sentinelle_status_text"></span>
+                <i id="sentinelle_status_icon"></i>
             </div>
         </article>
     </section>
     <!-- mib viewer - this section will display the MIB files details -->
-    <section class="sb-site-content" id="section_infra">
+    <section class="sb-site-content" id="section_display_infra">
         <article id="article_infra">
 
         </article>
     </section>
     <!-- mib viewer - this section will display MIB tree -->
-    <section class="sb-site-content" id="section_ap" hidden="hidden">
+    <section class="sb-site-content" id="section_display_ap" hidden="hidden">
         <article style="display: flex">
 
         </article>
     </section>
     <!-- mib viewer - this section will display MIB tree -->
-    <section class="sb-site-content" id="section_sta" hidden="hidden">
+    <section class="sb-site-content" id="section_display_sta" hidden="hidden">
         <article style="display: flex">
 
         </article>
     </section>
     <!-- mib viewer - this section will display MIB tree -->
-    <section class="sb-site-content" id="section_conf" hidden="hidden">
+    <section class="sb-site-content" id="section_display_conf" hidden="hidden">
         <article style="display: flex">
 
         </article>
     </section>
     <!-- mib viewer - this section will display the About article -->
-    <section class="sb-site-content" id="mib_about" hidden="hidden">
+    <section class="sb-site-content" id="section_display_about" hidden="hidden">
         <article>
 
         </article>
     </section>
     <!-- mib viewer - this section will display search tool -->
-    <section class="sb-site-content" id="mib_display_search" hidden="hidden">
+    <section class="sb-site-content" id="section_display_search" hidden="hidden">
         <article style="display: flex">
 
         </article>
@@ -175,27 +137,90 @@
 </nav>
 <script> FaviconAwesome('fa-connectdevelop', '#0093D1'); </script>
 <script>
-    var tabs = ["display_search", "display_preview", "display_detail", "about"];
-    function select_tab(tab_name) {
-        mySlidebars.slidebars.close();
-        if (tab_name.indexOf("display_") < 0) {
-            $("#mib_display_select").hide();
+
+    var sentinelle_status = "stopped";
+
+    var accessPointsList = [];
+    var associationList = [];
+    var stationsList = [];
+    var socket = io.connect('http://10.0.10.3:80');
+    socket.on('sentinelle_status', function(status){
+        sentinelle_status = status;
+        if (sentinelle_status=="running"){
+            $("#sentinelle_status_text").text(sentinelle_status)
+            document.getElementById("sentinelle_status_icon").className ="fa fa-spinner fa-pulse";
+            document.getElementById("sentinelle_action").className = "fa fa-toggle-on fa-lg";
         } else {
-            $("#mib_display_select").show();
+            $("#sentinelle_status_text").text(sentinelle_status);
+            document.getElementById("sentinelle_status_icon").className ="fa fa-spinner";
+            document.getElementById("sentinelle_action").className = "fa fa-toggle-off fa-lg";
+        }
+    })
+    socket.on('new_access_point', function(access_point) {
+        accessPointsList.push(access_point);
+        display_infra_ap(access_point);
+
+    });
+
+    function start_stop(){
+        if (sentinelle_status == "running"){
+            socket.emit("stop");
+        } else {
+            socket.emit("start");
+        }
+    }
+
+
+    function display_infra_ap(access_point){
+        $("#article_infra").append("<div class='infra_ap'>"
+                + "BSSID: " + convert_mac(access_point["BSSID"]) + "<br>"
+                + "SSID: " + access_point["SSID"] + "<br>"
+                + "Channel: " + access_point["channel"] + "<br>"
+                + "Country: " + access_point["country"] + "<br>"
+                + "Rates: " + access_point["rates"] + "<br>"
+                + "Extended Rates: " + access_point["extended_rates"] + "<br>"
+                + "Raw Data: " +access_point["beacon"] + "<br>"
+                + "</div>"
+        );
+    }
+
+
+
+
+    function convert_mac(mac_param){
+        var mac_result = "";;
+        for (var mbyte in mac_param){
+            mac_result += parseInt(mac_param[mbyte]).toString(16);
+        }
+        return mac_result;
+    }
+
+
+
+
+    var tabs = ["display_infra", "display_ap", "display_sta", "display_config", "about"];
+    function select_tab(tab_name) {
+        //mySlidebars.slidebars.close();
+        if (tab_name.indexOf("display_") < 0) {
+            $("#section_action").hide();
+        } else {
+            $("#section_action").show();
         }
         for (var i in tabs) {
             if (tabs.hasOwnProperty(i)) {
                 if (tabs[i] == tab_name) {
-                    $("#mib_" + tabs[i]).show();
+                    $("#section_" + tabs[i]).show();
                     document.getElementById("nav_" + tabs[i]).className = "nav_selected";
                 } else {
-                    $("#mib_" + tabs[i]).hide();
+                    $("#section_" + tabs[i]).hide();
                     document.getElementById("nav_" + tabs[i]).className = "";
                 }
             }
         }
 
     }
+
+
 </script>
 </body>
 </html>
