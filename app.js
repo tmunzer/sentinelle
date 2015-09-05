@@ -13,22 +13,22 @@ app.get('/', function(req, res) {
     res.render("sentinelle.ejs");
     });
 
+//sentinelle.s_start("wlan0mon");
 
 io.sockets.on('connection', function(socket) {
     console.log('new connection');
-
+    socket.emit('clear_all');
     // if sentinelle is already running, send the sentinelle status and the AP list to the new user
     if (sentinelle.is_running() == true) {
         socket.emit("sentinelle_status", "running");
-        ap_list = sentinelle.get_access_points();
-        for (var ap in ap_list){
-            socket.emit("new_access_point", ap_list[ap]);
-        }
         // if sentinelle is not running, send the sentinelle status
     } else {
         socket.emit("sentinelle_status", "stopped");
     }
-
+    ap_list = sentinelle.get_access_points();
+    for (var ap in ap_list){
+        socket.emit("new_access_point", ap_list[ap]);
+    }
 
     // if a user starts sentinelle
     socket.on("start", function() {
@@ -49,4 +49,4 @@ server.listen(server_port, function () {
     console.log("Server listening on port " + server_port + ".");
 });
 
-modul
+module.exports.io=io;

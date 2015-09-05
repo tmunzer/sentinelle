@@ -6,17 +6,17 @@ var Vlan = require("./vlan");
 
 function EthernetPacket(emitter) {
     this.emitter = emitter;
-    this.dhost = null;
-    this.shost = null;
+    this.transmitter_address = null;
+    this.destination_address = null;
     this.ethertype = null;
     this.vlan = null;
     this.payload = null;
 }
 
 EthernetPacket.prototype.decode = function (raw_packet, offset) {
-    this.dhost = new EthernetAddr(raw_packet, offset);
+    this.transmitter_address = new EthernetAddr(raw_packet, offset);
     offset += 6;
-    this.shost = new EthernetAddr(raw_packet, offset);
+    this.destination_address = new EthernetAddr(raw_packet, offset);
     offset += 6;
     this.ethertype = raw_packet.readUInt16BE(offset, true);
     offset += 2;
@@ -60,7 +60,7 @@ EthernetPacket.prototype.decoderName = "ethernet-packet";
 EthernetPacket.prototype.eventsOnDecode = false;
 
 EthernetPacket.prototype.toString = function () {
-    var ret = this.shost + " -> " + this.dhost;
+    var ret = this.destination_address + " -> " + this.transmitter_address;
     if (this.vlan) {
         ret += " vlan " + this.vlan;
     }
