@@ -16,8 +16,11 @@ function RadioFrameFlags(emitter) {
 //flags should be a uint8LE
 RadioFrameFlags.prototype.decode = function decode (flags) {
     this.raw = flags;
+    this.toDS = Boolean((flags >> 0) & 0x0001);
+    this.fromDS = Boolean((flags >> 1) & 0x0001);
     this.moreFragments = Boolean((flags >> 2) & 0x0001);
     this.isRetry = Boolean((flags >> 3) & 0x0001);
+    this.pwrMgmt = Boolean((flags >> 4) & 0x0001);
     this.moreData = Boolean((flags >> 5) & 0x0001);
     this.encrypted = Boolean((flags >> 6) & 0x0001);
     this.ordered = Boolean((flags >> 7) & 0x0001);
