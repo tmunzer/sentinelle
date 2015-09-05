@@ -147,6 +147,12 @@
     var associationList = [];
     var stationsList = [];
     var socket = io.connect('http://10.0.10.3:80');
+    socket.on("clear_all", function(){
+        accessPointsList = [];
+        associationList = [];
+        stationsList = [];
+        $("#ap_list").empty();
+    })
     socket.on('sentinelle_status', function(status){
         sentinelle_status = status;
         if (sentinelle_status=="running"){
@@ -160,9 +166,18 @@
         }
     })
     socket.on('new_access_point', function(access_point) {
-        accessPointsList.push(access_point);
-        display_infra_ap(access_point);
+        accessPointsList[access_point['BSSID']] = access_point;
+        $("#ap_list").append(format_ap_list(access_point, true));
 
+    })
+    socket.on('update_access_point', function(access_point){
+        accessPointsList[access_point['BSSID']]=access_point;
+        console.log(document.getElementById('ap_'+access_point['BSSID']));
+        if (document.getElementById('ap_'+access_point['BSSID']) != null){
+            document.getElementById('ap_'+access_point['BSSID']).innerHTML =format_ap_list(access_point, false);
+        } else {
+            $("#ap_list").append(format_ap_list(access_point, true));
+        }
     });
 
     function start_stop(){
@@ -174,17 +189,23 @@
     }
 
 
-    function display_infra_ap(access_point){
-        $("#ap_list").append("<div class='infra_ap'>"
-                + "BSSID: <a href='#' onclick='tab_ap(\"" + convert_mac(access_point["BSSID"]) + "\"')>" + convert_mac(access_point["BSSID"]) + "</a><br>"
+    function format_ap_list(access_point, new_ap){
+        var html_ap = '';
+        if (new_ap){
+            html_ap += "<div class='infra_ap' id='ap_" + access_point["BSSID"] + "'>";
+        }
+        html_ap += "BSSID: <a href='#' onclick='tab_ap(\"" + access_point["BSSID"] + "\"')>" + access_point["BSSID"] + "</a><br>"
                 + "SSID: " + access_point["SSID"] + "<br>"
                 + "Channel: " + access_point["channel"] + "<br>"
                 + "Country: " + access_point["country"] + "<br>"
                 + "Rates: " + access_point["rates"] + "<br>"
                 + "Extended Rates: " + access_point["extended_rates"] + "<br>"
-                + "Raw Data: " +access_point["beacon"] + "<br>"
-                + "</div>"
-        );
+                + "Connected Stations: " + access_point["associated_STA"].length + "<br>"
+                + "Raw Data: " +access_point["beacon"] + "<br>";
+        if (new_ap) {
+            html_ap += "</div>";
+        }
+        return html_ap;
     }
 
 
@@ -197,18 +218,6 @@
             $("#ap_detail").show();
         }
     }
-
-    function convert_mac(mac_param){
-        var mac_byte;
-        var mac_result = "";
-        for (var mbyte in mac_param){
-            mac_byte = ("00" + mac_param[mbyte].toString(16)).substr(-2);
-            mac_result += mac_byte.toUpperCase() + ":";
-        }
-        return mac_result.substring(0, 17);
-    }
-
-
 
 
     var tabs = ["display_infra", "display_ap", "display_sta", "display_config", "about"];
