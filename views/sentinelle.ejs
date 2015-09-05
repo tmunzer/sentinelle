@@ -95,7 +95,10 @@
     </section>
     <!-- mib viewer - this section will display MIB tree -->
     <section class="sb-site-content" id="section_display_ap" hidden="hidden">
-        <article style="display: flex">
+        <article id="ap_list">
+
+        </article>
+        <article id="ap_detail" hidden="hidden">
 
         </article>
     </section>
@@ -172,8 +175,8 @@
 
 
     function display_infra_ap(access_point){
-        $("#article_infra").append("<div class='infra_ap'>"
-                + "BSSID: " + convert_mac(access_point["BSSID"]) + "<br>"
+        $("#ap_list").append("<div class='infra_ap'>"
+                + "BSSID: <a href='#' onclick='tab_ap(\"" + convert_mac(access_point["BSSID"]) + "\"')>" + convert_mac(access_point["BSSID"]) + "</a><br>"
                 + "SSID: " + access_point["SSID"] + "<br>"
                 + "Channel: " + access_point["channel"] + "<br>"
                 + "Country: " + access_point["country"] + "<br>"
@@ -185,14 +188,24 @@
     }
 
 
-
+    function tab_ap(BSSID){
+        if (BSSID == null) {
+            $("#ap_list").show();
+            $("#ap_detail").hide();
+        } else {
+            $("#ap_list").hide();
+            $("#ap_detail").show();
+        }
+    }
 
     function convert_mac(mac_param){
-        var mac_result = "";;
+        var mac_byte;
+        var mac_result = "";
         for (var mbyte in mac_param){
-            mac_result += parseInt(mac_param[mbyte]).toString(16);
+            mac_byte = ("00" + mac_param[mbyte].toString(16)).substr(-2);
+            mac_result += mac_byte.toUpperCase() + ":";
         }
-        return mac_result;
+        return mac_result.substring(0, 17);
     }
 
 
