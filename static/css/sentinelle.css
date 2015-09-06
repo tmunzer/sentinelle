@@ -86,6 +86,8 @@ div .left {
     background-color: #ffffff;
     box-shadow: 1px 1px 6px #999;
     padding: 10px;
+    float: left;
+    width: 100%;
 }
 
 /* table */
@@ -185,10 +187,15 @@ label.disabled {
 
 
 
-.infra_ap {
+.ap_list {
     width: 30%;
     background-color: #eeeeee;
     margin: 10px;
     padding: 10px;
     float: left;
+}
+
+.container {
+    margin : auto;
+    width: auto;
 }

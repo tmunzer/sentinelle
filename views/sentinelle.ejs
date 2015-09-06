@@ -9,6 +9,7 @@
     <title>Sentinelle</title>
     <!-- JQuery -->
     <script type='text/javascript' src='./js/jquery-2.1.1.min.js'></script>
+    <script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
     <script type='text/javascript' src='./js/bootstrap.min.js'></script>
     <script type='text/javascript' src='./js/slidebars.js'></script>
     <script type='text/javascript' src='./js/jquery.autocomplete.js'></script>
@@ -74,7 +75,7 @@
     <!-- mib viewer - this section will display the article to load MIB files -->
     <section class="sb-site-content" id="section_action">
         <article style="display: flex;">
-            <div style="width: 40%">
+            <div style="width: 20%">
 
                 <span style="margin-left: 5px;">Sensor: </span>
                 <a href="#" onclick="start_stop()">
@@ -84,6 +85,15 @@
                 <span style="margin-left: 5px;">Status: </span>
                 <span id="sentinelle_status_text"></span>
                 <i id="sentinelle_status_icon"></i>
+            </div>
+            <div style="width: 50%;">
+                <a href="#" onclick="goTo('display_preview', 'oid_'+$('#autocomplete').val());">
+                    <i class="fa fa-search fa-lg"></i>
+                </a>
+                <input name="goto_oid" id="autocomplete" placeholder="Search" class="search" onkeypress="return enterKey(event)" type="text">
+            </div>
+            <div>
+                Sort by:
             </div>
         </article>
     </section>
@@ -95,10 +105,11 @@
     </section>
     <!-- mib viewer - this section will display MIB tree -->
     <section class="sb-site-content" id="section_display_ap" hidden="hidden">
-        <article id="ap_list">
-
+        <article id="article_ap_list">
+            <div id="ap_list" class="container">
+            </div>
         </article>
-        <article id="ap_detail" hidden="hidden">
+        <article id="article_ap_detail" hidden="hidden">
 
         </article>
     </section>
@@ -141,7 +152,7 @@
 <script> FaviconAwesome('fa-connectdevelop', '#0093D1'); </script>
 <script>
 
-    var sentinelle_status = "stopped";
+    var sentinelle_status = "";
 
     var accessPointsList = [];
     var associationList = [];
@@ -167,17 +178,19 @@
     })
     socket.on('new_access_point', function(access_point) {
         accessPointsList[access_point['BSSID']] = access_point;
-        $("#ap_list").append(format_ap_list(access_point, true));
+        $("#ap_list").append(format_ap_list(access_point, true))
+        sortDiv( $('#ap_list'),$('#ap_list').find('.ap_list'), 'bssid');
 
     })
     socket.on('update_access_point', function(access_point){
         accessPointsList[access_point['BSSID']]=access_point;
-        console.log(document.getElementById('ap_'+access_point['BSSID']));
         if (document.getElementById('ap_'+access_point['BSSID']) != null){
             document.getElementById('ap_'+access_point['BSSID']).innerHTML =format_ap_list(access_point, false);
         } else {
             $("#ap_list").append(format_ap_list(access_point, true));
         }
+        sortDiv( $('#ap_list'),$('#ap_list').find('.ap_list'), 'bssid');
+        $('#ap_'+access_point['BSSID']).toggle('highlight');
     });
 
     function start_stop(){
@@ -192,10 +205,18 @@
     function format_ap_list(access_point, new_ap){
         var html_ap = '';
         if (new_ap){
-            html_ap += "<div class='infra_ap' id='ap_" + access_point["BSSID"] + "'>";
+            html_ap += "<div " +
+                    "class='ap_list' " +
+                    "id='ap_" + access_point["BSSID"] + "' " +
+                    "data-bssid='"+access_point["BSSID"]+"' " +
+                    "data-ssid='"+access_point["SSID"] +  "' " +
+                    "data-station='"+access_point["associated_STA"].length + "' "+
+                    ">";
         }
-        html_ap += "BSSID: <a href='#' onclick='tab_ap(\"" + access_point["BSSID"] + "\"')>" + access_point["BSSID"] + "</a><br>"
+        html_ap += "BSSID: <a href='#' onclick='tab_ap(\"" + access_point["BSSID"] + "\")'>"
+                + access_point["BSSID"] + "</a><br>"
                 + "SSID: " + access_point["SSID"] + "<br>"
+                        + "Company: " + access_point['company'] + "<br>"
                 + "Channel: " + access_point["channel"] + "<br>"
                 + "Country: " + access_point["country"] + "<br>"
                 + "Rates: " + access_point["rates"] + "<br>"
@@ -208,14 +229,36 @@
         return html_ap;
     }
 
+    function SortAsc(a, b){
+        var aValue = a.toLowerCase();
+        var bValue = b.toLowerCase();
+        return ((aValue < bValue) ? -1 : ((aValue > bValue) ? 1 : 0));
+    }
+
+    function sortDiv(target,divs, value){
+        var tempArray = [];
+
+        $(divs).each(function(i,o){
+            tempArray.push($(o).data(value));
+        });
+
+        tempArray.sort(SortAsc);
+
+
+        $(tempArray).each(function(i,o){
+            target.append(target.find('.ap_list[data-'+value+'="'+o+'"]'));
+        });
+
+    }
+
 
     function tab_ap(BSSID){
         if (BSSID == null) {
-            $("#ap_list").show();
-            $("#ap_detail").hide();
+            $("#article_ap_list").show();
+            $("#article_ap_detail").hide();
         } else {
-            $("#ap_list").hide();
-            $("#ap_detail").show();
+            $("#article_ap_list").hide();
+            $("#article_ap_detail").show();
         }
     }
 
@@ -241,8 +284,9 @@
         }
 
     }
-
-
+    $(document).ready(function() {
+        select_tab('display_ap');
+    })
 </script>
 </body>
 </html>

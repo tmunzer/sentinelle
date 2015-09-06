@@ -1,92 +1,78 @@
-var app = require("./app.js");
+var EventEmitter = require("events").EventEmitter;
 var sys = require("sys");
 var pcap = require("./pcap");
+var AccessPoint = require('./AccessPoint');
 
-
-function AccessPoint(BSSID, payload) {
-    this.BSSID = BSSID;
-    this.associated_STA = [];
-
-    if (payload == null) {
-        this.beacon = null;
-    } else {
-        this.beacon = payload.beacon;
-        for (var tag in payload.beacon.tags) {
-            if (payload.beacon.tags[tag].hasOwnProperty("type")) {
-                switch (payload.beacon.tags[tag].typeId) {
-                    //SSID
-                    case 0:
-                        //		    console.log(payload.beacon.tags[tag].ssid);
-                        this.SSID = payload.beacon.tags[tag].ssid;
-                        break;
-                    //rates
-                    case 1:
-                        //		    console.log(payload.beacon.tags[tag].value);
-                        this.rates = payload.beacon.tags[tag].rates;
-                        break;
-                    //channel
-                    case 3:
-                        //		    console.log(payload.beacon.tags[tag].channel);
-                        this.channel = payload.beacon.tags[tag].channel;
-                        break;
-                    //extended rates
-                    case 50:
-                        //		    console.log(payload.beacon.tags[tag].value);
-                        this.extended_rates = payload.beacon.tags[tag].extended_rates;
-                        break;
-                    case 7:
-                        //		    console.log(payload.beacon.tags[tag].value);
-                        this.country = payload.beacon.tags[tag].country;
-                        break;
-                }
-            }
-
-        }
-    }
-
-}
+var ieeeMAC = require('./ieeeMAC');
+var ieeeMAC_list = null;
+exports.ieeeMAC_list = ieeeMAC_list;
 
 function Station(MAC) {
     this.MAC = MAC;
     this.probe_requests = [];
+    //this.company = ieeeMAC[this.MAC.replace(/:/g, '').substr(0, 6)]
 }
 
 function Sentinelle(capture_interface) {
-
     this.capture_interface = capture_interface;
     this.pcap_session = null;
-    var accessPointsList = [];
+    this.messenger = new EventEmitter();
+    this.current_status = "stopped";
+
+    this.accessPointsList = [];
     var stationsList = [];
 
 
     this.is_running = function () {
         if (this.pcap_session != null) {
-            return true;
+            this.current_status = "running";
+        } else if (ieeeMAC_list != null) {
+            this.current_status = "waiting";
         } else {
-            return false;
+            this.current_status = "loading";
         }
+        this.messenger.emit("status", this.current_status);
+    };
+
+    this.init = function (start) {
+        var that = this;
+        this.is_running();
+        ieeeMAC.init();
+        ieeeMAC.messenger.on('done', function (ieee_list) {
+            ieeeMAC_list = ieee_list;
+            that.is_running();
+            if (start) {
+                that.s_start();
+            }
+        });
+
     };
 
     this.s_start = function () {
-        this.pcap_session = pcap.createSession(this.capture_interface);
-        this.sentinelle_capture();
-        return this.is_running()
+        if (this.current_status == "loading") {
+            this.init(true);
+        } else {
+            this.pcap_session = pcap.createSession(this.capture_interface);
+            this.sentinelle_capture();
+            this.is_running();
+        }
     };
+
     this.s_stop = function () {
         this.pcap_session.close();
         this.pcap_session = null;
-        return this.is_running()
+        this.is_running();
     };
 
 
     this.sentinelle_capture = function () {
+        var that = this;
         this.pcap_session.on("packet", function (raw_packet) {
                 var packet = pcap.decode.packet(raw_packet);
                 //control frames
                 switch (packet.payload.ieee802_11Frame.type) {
                     // control frames
                     case 0x0000:
-
                         switch (packet.payload.ieee802_11Frame.subType) {
                             // 802.11 association request
                             case 0x0000:
@@ -116,18 +102,18 @@ function Sentinelle(capture_interface) {
                             //beacons
                             case 0x0008:
                                 var BSSID = packet.payload.ieee802_11Frame.bssid.toString();
-                                var accessPoint = new AccessPoint(BSSID, packet.payload.ieee802_11Frame);
-                                if (accessPointsList.hasOwnProperty(BSSID)) {
+                                var accessPoint = new AccessPoint(BSSID, packet.payload.ieee802_11Frame, ieeeMAC_list);
+                                if (that.accessPointsList.hasOwnProperty(BSSID)) {
                                     //if the AP was added based on a data frame (not from a beacon)
-                                    if (accessPointsList[BSSID].beacon == null) {
+                                    if (that.accessPointsList[BSSID].beacon == null) {
                                         console.log("new");
-                                        accessPointsList[BSSID] = accessPoint;
-                                        app.io.sockets.emit('new_access_point', accessPointsList[BSSID]);
+                                        that.accessPointsList[BSSID] = accessPoint;
+                                        that.messenger.emit('new_access_point', that.accessPointsList[BSSID]);
                                     }
                                     //TODO: refresh entry if beacon info changed
                                 } else {
-                                    accessPointsList[BSSID] = accessPoint;
-                                    app.io.sockets.emit('new_access_point', accessPointsList[BSSID]);
+                                    that.accessPointsList[BSSID] = accessPoint;
+                                    that.messenger.emit('new_access_point', that.accessPointsList[BSSID]);
                                 }
                                 break;
                             // 802.11 disassociate
@@ -173,12 +159,12 @@ function Sentinelle(capture_interface) {
                                 // VRRP (starts with 00:00:5E:00:01:)
                             && STA.toUpperCase().indexOf("00:00:5E:00:01:") != 0
                         ) {
-                            if (!accessPointsList.hasOwnProperty(BSSID)) {
-                                accessPointsList[BSSID] = new AccessPoint(BSSID, null);
+                            if (!that.accessPointsList.hasOwnProperty(BSSID)) {
+                                that.accessPointsList[BSSID] = new AccessPoint(BSSID, null);
                             }
-                            if (accessPointsList[BSSID].associated_STA.indexOf(STA) < 0) {
-                                accessPointsList[BSSID].associated_STA.push(STA);
-                                app.io.sockets.emit('update_access_point', accessPointsList[BSSID]);
+                            if (that.accessPointsList[BSSID].associated_STA.indexOf(STA) < 0) {
+                                that.accessPointsList[BSSID].associated_STA.push(STA);
+                                that.messenger.emit('update_access_point', that.accessPointsList[BSSID]);
                             }
                             switch (packet.payload.ieee802_11Frame.subType) {
                                 //data
@@ -189,30 +175,30 @@ function Sentinelle(capture_interface) {
                                     break;
                                 // QoS Data
                                 case 0x0008:
-                                    /*if (packet.payload.ieee802_11Frame.flags.encrypted){
-                                     console.log('this is encreypted:');
+                                    /*
+                                    if (packet.payload.ieee802_11Frame.flags.encrypted) {
+                                        console.log('this is encreypted:');
 
-                                     }else {
-                                     console.log(sys.inspect(packet.payload.ieee802_11Frame.llc));
-                                     }*/
+                                    } else {
+                                        console.log(sys.inspect(packet.payload.ieee802_11Frame.llc));
+                                    }
+                                    ! */
                                     break;
                             }
                             break;
                         }
                 }
             }
-        )
-        ;
+        );
 
     };
 
     this.get_access_points = function () {
-        return accessPointsList;
+        return this.accessPointsList;
     };
 
 
 }
 
 
-exports.Sentinelle = Sentinelle;
-
+module.exports = Sentinelle;

@@ -3,50 +3,58 @@ var app = express();
 var server = require('http').createServer(app);
 var io = require('socket.io').listen(server);
 
-var Sentinelle = require("./sentinelle").Sentinelle;
+var Sentinelle = require("./sentinelle");
 var sentinelle = new Sentinelle("wlan0mon");
 var ap_list;
 var server_port = 80;
 
-app.use(express.static(__dirname+'/static'));
-app.get('/', function(req, res) {
+
+// web server routes
+app.use(express.static(__dirname + '/static'));
+app.get('/', function (req, res) {
     res.render("sentinelle.ejs");
-    });
+});
 
 //sentinelle.s_start("wlan0mon");
 
-io.sockets.on('connection', function(socket) {
+// Sentinelle Events
+sentinelle.messenger.on('status', function (status) {
+    console.log("sentinelle status: ", status);
+    io.sockets.emit("sentinelle_status", status);
+});
+sentinelle.messenger.on("new_access_point", function (accessPoint) {
+    io.sockets.emit('new_access_point', accessPoint);
+});
+sentinelle.messenger.on('update_access_point', function (accessPoint) {
+    io.sockets.emit('update_access_point', accessPoint);
+});
+
+//socket events
+io.sockets.on('connection', function (socket) {
     console.log('new connection');
     socket.emit('clear_all');
-    // if sentinelle is already running, send the sentinelle status and the AP list to the new user
-    if (sentinelle.is_running() == true) {
-        socket.emit("sentinelle_status", "running");
-        // if sentinelle is not running, send the sentinelle status
-    } else {
-        socket.emit("sentinelle_status", "stopped");
-    }
+    sentinelle.is_running();
     ap_list = sentinelle.get_access_points();
-    for (var ap in ap_list){
+    for (var ap in ap_list) {
         socket.emit("new_access_point", ap_list[ap]);
     }
 
     // if a user starts sentinelle
-    socket.on("start", function() {
-        if (sentinelle.is_running() != true){
-            socket.emit("sentinelle_status", "starting");
-            sentinelle.s_start("wlan0mon");
-            io.sockets.emit("sentinelle_status", "running");
-        }
+    socket.on("start", function () {
+        sentinelle.s_start("wlan0mon");
     });
     // if a user stops sentinelle
-    socket.on("stop", function() {
-        console.log("stop");
+    socket.on("stop", function () {
         sentinelle.s_stop();
-        io.sockets.emit('sentinelle_status', "stopped");
     })
 });
+
+
+// initialize sentinelle
+sentinelle.init(false);
+
+// starting server
 server.listen(server_port, function () {
     console.log("Server listening on port " + server_port + ".");
 });
 
-module.exports.io=io;
