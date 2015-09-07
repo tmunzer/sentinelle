@@ -1,9 +1,8 @@
-
-function AccessPoint(BSSID, payload, ieeeMAC) {
-    this.BSSID = BSSID;
+function BSSID(BSSID_Address, payload, ieeeMAC) {
+    this.BSSID_Address = BSSID_Address;
     this.associated_STA = [];
-    this.OUI = this.BSSID.replace(/:/g, '').substr(0, 6).toUpperCase();
-    this.company = ieeeMAC[this.OUI];
+    this.OUI = this.BSSID_Address.replace(/:/g, '').substr(0, 6).toUpperCase();
+    this.company = ieeeMAC[this.OUI] || "Unknown";
 
 
     if (payload == null) {
@@ -45,4 +44,4 @@ function AccessPoint(BSSID, payload, ieeeMAC) {
     }
 }
 
-module.exports = AccessPoint;
+module.exports = BSSID;

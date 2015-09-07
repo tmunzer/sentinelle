@@ -5,7 +5,6 @@ var io = require('socket.io').listen(server);
 
 var Sentinelle = require("./sentinelle");
 var sentinelle = new Sentinelle("wlan0mon");
-var ap_list;
 var server_port = 80;
 
 
@@ -22,11 +21,14 @@ sentinelle.messenger.on('status', function (status) {
     console.log("sentinelle status: ", status);
     io.sockets.emit("sentinelle_status", status);
 });
-sentinelle.messenger.on("new_access_point", function (accessPoint) {
-    io.sockets.emit('new_access_point', accessPoint);
+sentinelle.messenger.on('SSID', function (SSID, BSSIDs) {
+    io.sockets.emit('SSID', SSID, BSSIDs);
 });
-sentinelle.messenger.on('update_access_point', function (accessPoint) {
-    io.sockets.emit('update_access_point', accessPoint);
+sentinelle.messenger.on('BSSID', function (action, BSSID) {
+    io.sockets.emit('BSSID', action, BSSID);
+});
+sentinelle.messenger.on('STA', function (action, STA) {
+    io.sockets.emit('STA', action, STA);
 });
 
 //socket events
@@ -34,9 +36,11 @@ io.sockets.on('connection', function (socket) {
     console.log('new connection');
     socket.emit('clear_all');
     sentinelle.is_running();
-    ap_list = sentinelle.get_access_points();
-    for (var ap in ap_list) {
-        socket.emit("new_access_point", ap_list[ap]);
+    for (var SSID in sentinelle.SSIDList){
+        socket.emit("SSID", 'new', sentinelle.SSIDList[SSID]);
+    }
+    for (var BSSID in sentinelle.BSSIDList) {
+        socket.emit("BSSID", 'new', sentinelle.BSSIDList[BSSID]);
     }
 
     // if a user starts sentinelle
@@ -49,12 +53,13 @@ io.sockets.on('connection', function (socket) {
     })
 });
 
-
-// initialize sentinelle
-sentinelle.init(false);
-
 // starting server
 server.listen(server_port, function () {
     console.log("Server listening on port " + server_port + ".");
 });
+
+// initialize sentinelle
+sentinelle.init(false);
+
+
 

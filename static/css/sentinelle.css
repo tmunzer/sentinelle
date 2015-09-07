@@ -86,7 +86,6 @@ div .left {
     background-color: #ffffff;
     box-shadow: 1px 1px 6px #999;
     padding: 10px;
-    float: left;
     width: 100%;
 }
 
@@ -198,4 +197,9 @@ label.disabled {
 .container {
     margin : auto;
     width: auto;
+}
+
+.btn-selected {
+    background-color: #0093D1;
+    color: white;
 }

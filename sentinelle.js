@@ -1,16 +1,16 @@
 var EventEmitter = require("events").EventEmitter;
 var sys = require("sys");
 var pcap = require("./pcap");
-var AccessPoint = require('./AccessPoint');
+var BSSID_template = require('./BSSID');
+var STA_template = require("./STA");
 
 var ieeeMAC = require('./ieeeMAC');
 var ieeeMAC_list = null;
 exports.ieeeMAC_list = ieeeMAC_list;
 
-function Station(MAC) {
-    this.MAC = MAC;
-    this.probe_requests = [];
-    //this.company = ieeeMAC[this.MAC.replace(/:/g, '').substr(0, 6)]
+function SSID_template(SSID){
+    this.SSID = SSID || "Unknown";
+    this.BSSIDs = [];
 }
 
 function Sentinelle(capture_interface) {
@@ -19,9 +19,9 @@ function Sentinelle(capture_interface) {
     this.messenger = new EventEmitter();
     this.current_status = "stopped";
 
-    this.accessPointsList = [];
-    var stationsList = [];
-
+    this.BSSIDList = [];
+    this.STAList = [];
+    this.SSIDList = [];
 
     this.is_running = function () {
         if (this.pcap_session != null) {
@@ -101,19 +101,36 @@ function Sentinelle(capture_interface) {
                                 break;
                             //beacons
                             case 0x0008:
-                                var BSSID = packet.payload.ieee802_11Frame.bssid.toString();
-                                var accessPoint = new AccessPoint(BSSID, packet.payload.ieee802_11Frame, ieeeMAC_list);
-                                if (that.accessPointsList.hasOwnProperty(BSSID)) {
-                                    //if the AP was added based on a data frame (not from a beacon)
-                                    if (that.accessPointsList[BSSID].beacon == null) {
-                                        console.log("new");
-                                        that.accessPointsList[BSSID] = accessPoint;
-                                        that.messenger.emit('new_access_point', that.accessPointsList[BSSID]);
+                                var BSSID_Address = packet.payload.ieee802_11Frame.bssid.toString();
+                                var BSSID = new BSSID_template(BSSID_Address, packet.payload.ieee802_11Frame, ieeeMAC_list);
+                                // if the BSSID is listed into the BSSID list
+                                if (that.BSSIDList.hasOwnProperty(BSSID_Address)) {
+                                    //if the BSSID was added based on a data frame (not from a beacon)
+                                    if (that.BSSIDList[BSSID_Address].beacon == null) {
+                                        that.BSSIDList[BSSID_Address] = BSSID;
+                                        that.messenger.emit('BSSID', 'new', that.BSSIDList[BSSID_Address]);
+                                        if (that.SSIDList.hasOwnProperty(BSSID.SSID)){
+                                            that.SSIDList[BSSID.SSID].BSSIDs.push(BSSID_Address);
+                                            that.messenger.emit("SSID", 'update', that.SSIDList[BSSID.SSID]);
+                                        } else {
+                                            that.SSIDList[BSSID.SSID] = new SSID_template(BSSID.SSID);
+                                            that.SSIDList[BSSID.SSID].BSSIDs.push(BSSID_Address);
+                                            that.messenger.emit("SSID", 'new', that.SSIDList[BSSID.SSID]);
+                                        }
                                     }
                                     //TODO: refresh entry if beacon info changed
+                                    //if it's the first time the BSSID is seen
                                 } else {
-                                    that.accessPointsList[BSSID] = accessPoint;
-                                    that.messenger.emit('new_access_point', that.accessPointsList[BSSID]);
+                                    that.BSSIDList[BSSID_Address] = BSSID;
+                                    that.messenger.emit('BSSID', 'new', that.BSSIDList[BSSID_Address]);
+                                    if (that.SSIDList.hasOwnProperty(BSSID.SSID)){
+                                        that.SSIDList[BSSID.SSID].BSSIDs.push(BSSID_Address);
+                                        that.messenger.emit("SSID", 'update', that.SSIDList[BSSID.SSID]);
+                                    } else {
+                                        that.SSIDList[BSSID.SSID] = new SSID_template(BSSID.SSID);
+                                        that.SSIDList[BSSID.SSID].BSSIDs.push(BSSID_Address);
+                                        that.messenger.emit("SSID", 'new', that.SSIDList[BSSID.SSID]);
+                                    }
                                 }
                                 break;
                             // 802.11 disassociate
@@ -135,37 +152,62 @@ function Sentinelle(capture_interface) {
                         break;
                     // data frames
                     case 0x0002:
-                        BSSID = packet.payload.ieee802_11Frame.bssid.toString();
-                        var STA = null;
+                        var BSSID_Address = packet.payload.ieee802_11Frame.bssid.toString();
+                        var STA_Address = null;
                         if (!packet.payload.ieee802_11Frame.flags.fromDS && packet.payload.ieee802_11Frame.flags.toDS) {
-                            STA = packet.payload.ieee802_11Frame.transmitter_address.toString();
+                            STA_Address = packet.payload.ieee802_11Frame.transmitter_address.toString();
                         } else if (packet.payload.ieee802_11Frame.flags.fromDS && !packet.payload.ieee802_11Frame.flags.toDS) {
-                            STA = packet.payload.ieee802_11Frame.receiver_address.toString();
+                            STA_Address = packet.payload.ieee802_11Frame.receiver_address.toString();
                         }
                         // remove specific MAC addresses
-                        if (STA != null
+                        if (STA_Address != null
                                 // Broadcast address
-                            && STA.toUpperCase().indexOf("FF:FF:FF:FF:FF:FF") != 0
+                            && STA_Address.toUpperCase().indexOf("FF:FF:FF:FF:FF:FF") != 0
                                 // CDP address
-                            && STA.toUpperCase().indexOf("01:00:0C:CC:CC:CC") != 0
+                            && STA_Address.toUpperCase().indexOf("01:00:0C:CC:CC:CC") != 0
                                 // Spanning Tree address
-                            && STA.toUpperCase().indexOf("01:80:C2:00:00:00") != 0
+                            && STA_Address.toUpperCase().indexOf("01:80:C2:00:00:00") != 0
                                 // IPv6 Multicast (starts with 33:33)
-                            && STA.toUpperCase().indexOf("33:33") != 0
+                            && STA_Address.toUpperCase().indexOf("33:33") != 0
                                 // IPv4 Multicast (starts with 01:00:5E)
-                            && STA.toUpperCase().indexOf("01:00:5E") != 0
+                            && STA_Address.toUpperCase().indexOf("01:00:5E") != 0
                                 // HSRP (starts with 00:00:0c:07:ac:)
-                            && STA.toUpperCase().indexOf("00:00:0c:07:ac:") != 0
+                            && STA_Address.toUpperCase().indexOf("00:00:0c:07:ac:") != 0
                                 // VRRP (starts with 00:00:5E:00:01:)
-                            && STA.toUpperCase().indexOf("00:00:5E:00:01:") != 0
+                            && STA_Address.toUpperCase().indexOf("00:00:5E:00:01:") != 0
                         ) {
-                            if (!that.accessPointsList.hasOwnProperty(BSSID)) {
-                                that.accessPointsList[BSSID] = new AccessPoint(BSSID, null);
+                            // if the
+                            var STA;
+                            if (that.STAList.hasOwnProperty(STA_Address)) {
+                                STA = that.STAList[STA_Address];
+                            } else {
+                                that.STAList[STA_Address] = new STA_template(STA_Address, ieeeMAC_list);
+                                STA = that.STAList[STA_Address];
+                                that.messenger.emit("STA", "new", STA);
                             }
-                            if (that.accessPointsList[BSSID].associated_STA.indexOf(STA) < 0) {
-                                that.accessPointsList[BSSID].associated_STA.push(STA);
-                                that.messenger.emit('update_access_point', that.accessPointsList[BSSID]);
+                            // if the BSSID_Address is not in the list
+                            if (!that.BSSIDList.hasOwnProperty(BSSID_Address)) {
+                                that.BSSIDList[BSSID_Address] = new BSSID_template(BSSID_Address, null, ieeeMAC_list);
+                                that.messenger.emit("BSSID", "new", that.BSSIDList[BSSID_Address])
                             }
+                            // if the station was not seen on this BSSID
+                            if (that.BSSIDList[BSSID_Address].associated_STA.indexOf(STA_Address) < 0) {
+                                // if the station was already associated before
+                                if (STA.associated_BSSID != null) {
+                                    var from_BSSID = STA.associated_BSSID;
+                                    //remove it from the previous BSSID_Address and send the update to the socket
+                                    removeValueFromArray(that.BSSIDList[from_BSSID], STA_Address);
+                                    that.messenger.emit('BSSID', 'update', that.BSSIDList[from_BSSID]);
+                                } else {
+                                    that.STAList[STA_Address].associated_BSSID = BSSID_Address;
+                                    that.messenger.emit("STA", "update", that.STAList[STA_Address]);
+                                }
+                                // add the station to this BSSID_Address and send the update to the socket
+                                that.BSSIDList[BSSID_Address].associated_STA.push(STA_Address);
+                                that.messenger.emit('BSSID', 'update', that.BSSIDList[BSSID_Address]);
+                            }
+
+
                             switch (packet.payload.ieee802_11Frame.subType) {
                                 //data
                                 case 0x0000:
@@ -176,28 +218,31 @@ function Sentinelle(capture_interface) {
                                 // QoS Data
                                 case 0x0008:
                                     /*
-                                    if (packet.payload.ieee802_11Frame.flags.encrypted) {
-                                        console.log('this is encreypted:');
+                                     if (packet.payload.ieee802_11Frame.flags.encrypted) {
+                                     console.log('this is encreypted:');
 
-                                    } else {
-                                        console.log(sys.inspect(packet.payload.ieee802_11Frame.llc));
-                                    }
-                                    ! */
+                                     } else {
+                                     console.log(sys.inspect(packet.payload.ieee802_11Frame.llc));
+                                     }
+                                     ! */
                                     break;
                             }
                             break;
                         }
+                        break;
                 }
             }
         );
 
     };
+}
 
-    this.get_access_points = function () {
-        return this.accessPointsList;
-    };
-
-
+// Find and remove item from an array
+function removeValueFromArray(array, value) {
+    var i = array.indexOf(value);
+    if (i != -1) {
+        array.splice(i, 1);
+    }
 }
 
 
