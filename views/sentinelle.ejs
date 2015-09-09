@@ -8,12 +8,14 @@
 
     <title>Sentinelle</title>
     <!-- JQuery -->
-    <script type='text/javascript' src='./js/jquery-2.1.1.min.js'></script>
+    <script type='text/javascript' src='./js/lib/jquery-2.1.1.min.js'></script>
     <script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
-    <script type='text/javascript' src='./js/bootstrap.min.js'></script>
-    <script type='text/javascript' src='./js/slidebars.js'></script>
-    <script type='text/javascript' src='./js/jquery.autocomplete.js'></script>
-    <script type='text/javascript' src='./js/FaviconAwesome.js'></script>
+    <script type='text/javascript' src='./js/lib/bootstrap.min.js'></script>
+    <script type='text/javascript' src='./js/lib/slidebars.js'></script>
+    <script type='text/javascript' src='./js/lib/jquery.autocomplete.js'></script>
+    <script type='text/javascript' src='./js/lib/FaviconAwesome.js'></script>
+    <script type='text/javascript' src='./js/ap.js'></script>
+    <script type='text/javascript' src='./js/infra.js'></script>
     <script type='text/javascript' src="/socket.io/socket.io.js"></script>
     <link rel="stylesheet" href="./css/slidebars.css" type="text/css">
     <link rel="stylesheet" href="./css/font-awesome.min.css" type="text/css">
@@ -87,83 +89,47 @@
                     <i id="sentinelle_status_icon"></i>
                 </div>
             </div>
-            <div style="width: 50%;margin:auto;">
+            <div style="width: 30%;margin:auto;">
                 <a href="#" onclick="goTo('display_preview', 'oid_'+$('#autocomplete').val());">
                     <i class="fa fa-search fa-lg"></i>
                 </a>
                 <input name="filter_list" id="autocomplete" placeholder="Search" class="search"
                        onkeypress="return enterKey(event)" type="text">
             </div>
-            <div style="width: 30%;margin:auto;text-align: center">
+            <div style="margin:auto;text-align: center">
                 <div class="btn-group" role="group">
                     <button type="button" class="btn btn-default" disabled="disabled">Sort by:</button>
-                    <button type="button" id="sort-by-ssid" class="btn btn-default btn-selected"
-                            onclick="sortApList('ssid')">SSID
+                    <button type="button" id="sort-by-rssi" class="btn btn-default" onclick="sortList('rssi')">
+                        RSSI
                     </button>
-                    <button type="button" id="sort-by-bssid" class="btn btn-default" onclick="sortApList('bssid')">
+                    <button type="button" id="sort-by-ssid" class="btn btn-default btn-selected"
+                            onclick="sortList('ssid')">SSID
+                    </button>
+                    <button type="button" id="sort-by-bssid" class="btn btn-default" onclick="sortList('bssid')">
                         BSSID
                     </button>
-                    <button type="button" id="sort-by-company" class="btn btn-default" onclick="sortApList('company')">
+                    <button type="button" id="sort-by-company" class="btn btn-default" onclick="sortList('company')">
                         Company
                     </button>
                 </div>
                 <div class="btn-group" role="group">
                     <button type="button" class="btn btn-default" disabled="disabled">Order:</button>
                     <button type="button" id="order-by-asc" class="btn btn-default btn-selected btn-sort-order"
-                            onclick="orderApList('asc')">Asc
+                            onclick="orderList('asc')">Asc
                     </button>
                     <button type="button" id="order-by-desc" class="btn btn-default btn-sort-order"
-                            onclick="orderApList('desc')">Desc
+                            onclick="orderList('desc')">Desc
                     </button>
                 </div>
             </div>
         </article>
     </section>
-
-    <!-- mib viewer - this section will display the MIB files details -->
-    <section class="sb-site-content" id="section_display_infra">
-        <article id="article_infra">
-            <div id="ssid_list" style="float:right">
-
-            </div>
-        </article>
-    </section>
-
-    <!-- mib viewer - this section will display MIB tree -->
-    <section class="sb-site-content" id="section_display_ap" hidden="hidden">
-        <article id="article_ap_list">
-            <div id="ap_list" class="container">
-            </div>
-        </article>
-        <article id="article_ap_detail" hidden="hidden">
-
-        </article>
-    </section>
-    <!-- mib viewer - this section will display MIB tree -->
-    <section class="sb-site-content" id="section_display_sta" hidden="hidden">
-        <article style="display: flex">
-
-        </article>
-    </section>
-    <!-- mib viewer - this section will display MIB tree -->
-    <section class="sb-site-content" id="section_display_conf" hidden="hidden">
-        <article style="display: flex">
-
-        </article>
-    </section>
-    <!-- mib viewer - this section will display the About article -->
-    <section class="sb-site-content" id="section_display_about" hidden="hidden">
-        <article>
-
-        </article>
-    </section>
-    <!-- mib viewer - this section will display search tool -->
-    <section class="sb-site-content" id="section_display_search" hidden="hidden">
-        <article style="display: flex">
-
-        </article>
+    <section class="sb-site-content" id="section_display">
 
     </section>
+
+
+
 
 </div>
 <!-- mib viewer - this is the right pane to display infos  -->
@@ -181,6 +147,7 @@
     var sentinelle_status = "";
     var sort_by = "ssid";
     var sort_order = "asc";
+    var current_list = "";
 
     var BSSIDList = [];
     var SSIDList = [];
@@ -211,14 +178,14 @@
         }
     })
     socket.on('SSID', function (action, SSID) {
-        //console.log(SSID.SSID);
+        console.log(SSID.SSID);
         //console.log(SSID.BSSIDs);
         SSID.last_update = new Date().toLocaleString();
         SSIDList[SSID.SSID] = SSID;
         if (document.getElementById("ssid_" + SSID.SSID) != null) {
             document.getElementById("ssid_" + SSID.SSID).innerHTML = format_infrastructure(SSID);
         } else {
-            $("#article_infra").append(format_infrastructure(SSID));
+            $("#infra_list").append(format_infrastructure(SSID));
         }
         //sortDiv($('#article_infra'), $('#article_infra').find('.ssid'), sort_by);
     })
@@ -237,8 +204,8 @@
     socket.on("STA", function (action, STA) {
         STA['last_update'] = new Date().toLocaleString();
         STAList[STA.MAC] = STA;
-        console.log(action);
-        console.log(STA);
+        //console.log(action);
+        //console.log(STA);
     })
 
     // Control the sensor
@@ -250,83 +217,28 @@
         }
     }
 
-    function format_infrastructure(SSID) {
-        var ds = '<div id="' + SSID["SSID"] + '" style="background-color:#AEAEAE">SSID: ' + SSID["SSID"];
-        for (var BSSID in SSID.BSSIDs) {
-            var current_BSSID = SSID.BSSIDs[BSSID];
-            ds += '<div id="' + SSID["SSID"] + '_' + current_BSSID + '" style="background-color:#EEEEEE; padding-left:20px">' +
-                    current_BSSID + ' (' + BSSIDList[current_BSSID].RSSI + ')';
-            for (var STA in BSSIDList[current_BSSID].associated_STA) {
-                var current_STA = BSSIDList[current_BSSID].associated_STA[STA];
-                console.log(current_STA);
-                ds += '<div id="' + current_BSSID + '_' + current_STA + '" style="padding-left:20px">' +
-                       current_STA + ' (' + STAList[current_STA].RSSI + ')';
-                ds += '</div>';
-            }
-            ds += '</div>';
-        }
-        ds += '</div>';
-        return ds;
-    }
-
-    // generate HTML code to display a new AP in the AP list
-    function format_ap_list(BSSID, is_new_ap) {
-        var html_ap = '';
-        if (is_new_ap) {
-            html_ap += "<div " +
-                    "class='ap_list' " +
-                    "id='ap_" + BSSID.BSSID_Address + "' " +
-                    "data-bssid='" + BSSID.BSSID_Address + "' " +
-                    "data-ssid='" + BSSID.ssid + "' " +
-                    "data-company='" + BSSID.company + "' " +
-                    ">";
-        }
-        html_ap += "BSSID: <a href='#' onclick='tab_ap(\"" + BSSID.BSSID_Address + "\")'>"
-                + BSSID.BSSID_Address + "</a><br>"
-                + "SSID: " + BSSID.SSID + "<br>"
-                + "Company: " + BSSID.company + "<br>"
-                + "Channel: " + BSSID.channel + "<br>"
-                + "Country: " + BSSID.country + "<br>"
-                + "RSSI: " + BSSID.RSSI + "dBm<br>"
-                + "Rates: " + BSSID.rates + "<br>"
-                + "Extended Rates: " + BSSID.extended_rates + "<br>"
-                + "Connected Stations: " + BSSID.associated_STA.length + "<br>"
-                + "Raw Data: " + BSSID.beacon + "<br>"
-                + "Last Update: " + BSSID.last_update;
-        if (is_new_ap) {
-            html_ap += "</div>";
-        }
-        return html_ap;
-    }
-
-
-    // sort the displayed items
-    // called from the AP list
-    function sortApList(value) {
-        sort_by = value;
-        $("[id^=sort-by]").removeClass("btn-selected");
-        $("#sort-by-" + value).addClass("btn-selected");
-        sortDiv($('#ap_list'), $('#ap_list').find('.ap_list'), sort_by);
-    }
-
-    function orderApList(value) {
-        sort_order = value;
-        $("[id^=order-by]").removeClass("btn-selected");
-        $("#order-by-" + value).addClass("btn-selected");
-        sortDiv($('#ap_list'), $('#ap_list').find('.ap_list'), sort_by);
-    }
 
     // ascending order
     function SortAsc(a, b) {
-        var aValue = a.toLowerCase();
-        var bValue = b.toLowerCase();
+        try {
+            var aValue = a.toLowerCase();
+            var bValue = b.toLowerCase();
+        } catch(e) {
+            var aValue = a;
+            var bValue = b;
+        }
         return ((aValue < bValue) ? -1 : ((aValue > bValue) ? 1 : 0));
     }
 
     // descending order
     function SortDesc(a, b) {
+    try {
         var aValue = a.toLowerCase();
         var bValue = b.toLowerCase();
+    } catch(e) {
+        var aValue = a;
+        var bValue = b;
+    }
         return ((aValue > bValue) ? -1 : ((aValue < bValue) ? 1 : 0));
     }
 
@@ -350,42 +262,79 @@
 
     }
 
-    // display / hide article from the AP details (list or details)
-    function tab_ap(BSSID) {
-        if (BSSID == null) {
-            $("#article_ap_list").show();
-            $("#article_ap_detail").hide();
-        } else {
-            $("#article_ap_list").hide();
-            $("#article_ap_detail").show();
+
+    function select_tab(tab_name, param) {
+        var html = "";
+        $('#section_display').empty();
+        $("[id^=sort-by]").prop('disabled', true);
+        $("[id^=sort-by]").removeClass("btn-selected");
+        $("[id^=order-by]").prop('disabled', true);
+        $("[id^=order-by]").removeClass("btn-selected");
+
+        $("[id^=nav_]").removeClass("nav_selected");
+        switch (tab_name){
+            case "display_infra":
+                current_list = "infra_list";
+                $("#nav_display_infra").addClass("nav_selected");
+
+                $("#sort-by-rssi").prop('disabled', false);
+                $("#sort-by-ssid").prop('disabled', false);
+                $("#sort-by-ssid").addClass("btn-selected");
+
+                $("[id^=order-by]").prop('disabled', false);
+                $("#order-by-asc").addClass("btn-selected");
+
+                html = tab_infra();
+                break;
+            case "display_ap":
+                current_list = "ap_list";
+                $("#nav_display_ap").addClass("nav_selected");
+
+                $("[id^=sort-by]").prop('disabled', false);
+                $("#sort-by-ssid").addClass("btn-selected");
+
+                $("[id^=order-by]").prop('disabled', false);
+                $("#order-by-asc").addClass("btn-selected");
+                html = tab_ap();
+                break;
+            case "ap_details":
+                $("#nav_display_ap").addClass("nav_selected");
+
+                html = tab_ap_details(param);
+                break;
+            case "display_sta":
+                current_list = "sta_list";
+                $("#nav_display_sta").addClass("nav_selected");
+                break;
+            case "display_config":
+                $("#nav_display_config").addClass("nav_selected");
+                break;
+            case "about":
+                $("#nav_display_about").addClass("nav_selected");
+                break;
         }
+
+        $('#section_display').append(html);
     }
 
+    // sort the displayed items
+    // called from the AP list
+    function sortList(value) {
+        sort_by = value;
+        $("[id^=sort-by]").removeClass("btn-selected");
+        $("#sort-by-" + value).addClass("btn-selected");
+        sortDiv($('#'+current_list), $('#'+current_list).find('.'+current_list), sort_by);
+    }
 
-    var tabs = ["display_infra", "display_ap", "display_sta", "display_config", "about"];
-    function select_tab(tab_name) {
-        //mySlidebars.slidebars.close();
-        if (tab_name.indexOf("display_") < 0) {
-            $("#section_action").hide();
-        } else {
-            $("#section_action").show();
-        }
-        for (var i in tabs) {
-            if (tabs.hasOwnProperty(i)) {
-                if (tabs[i] == tab_name) {
-                    $("#section_" + tabs[i]).show();
-                    document.getElementById("nav_" + tabs[i]).className = "nav_selected";
-                } else {
-                    $("#section_" + tabs[i]).hide();
-                    document.getElementById("nav_" + tabs[i]).className = "";
-                }
-            }
-        }
-
+    function orderList(value) {
+        sort_order = value;
+        $("[id^=order-by]").removeClass("btn-selected");
+        $("#order-by-" + value).addClass("btn-selected");
+        sortDiv($('#'+current_list), $('#'+current_list).find('.'+current_list), sort_by);
     }
 
     $(document).ready(function () {
-        select_tab('display_ap');
+        select_tab('display_infra');
     })
 
 </script>
