@@ -84,7 +84,7 @@ div .left {
 .sb-site-content article {
     margin: 10px auto 25px auto;
     background-color: #ffffff;
-    box-shadow: 1px 1px 6px #999;
+    box-shadow: 0px 0px 2px #0093D1;
     padding: 10px;
     width: 100%;
 }

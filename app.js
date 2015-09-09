@@ -36,13 +36,15 @@ io.sockets.on('connection', function (socket) {
     console.log('new connection');
     socket.emit('clear_all');
     sentinelle.is_running();
-    for (var SSID in sentinelle.SSIDList){
-        socket.emit("SSID", 'new', sentinelle.SSIDList[SSID]);
+    for (var STA in sentinelle.STAList){
+        socket.emit("STA", "new", sentinelle.STAList[STA]);
     }
     for (var BSSID in sentinelle.BSSIDList) {
         socket.emit("BSSID", 'new', sentinelle.BSSIDList[BSSID]);
     }
-
+    for (var SSID in sentinelle.SSIDList){
+        socket.emit("SSID", 'new', sentinelle.SSIDList[SSID]);
+    }
     // if a user starts sentinelle
     socket.on("start", function () {
         sentinelle.s_start("wlan0mon");

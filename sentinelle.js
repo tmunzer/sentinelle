@@ -8,7 +8,7 @@ var ieeeMAC = require('./ieeeMAC');
 var ieeeMAC_list = null;
 exports.ieeeMAC_list = ieeeMAC_list;
 
-function SSID_template(SSID){
+function SSID_template(SSID) {
     this.SSID = SSID || "Unknown";
     this.BSSIDs = [];
 }
@@ -102,14 +102,15 @@ function Sentinelle(capture_interface) {
                             //beacons
                             case 0x0008:
                                 var BSSID_Address = packet.payload.ieee802_11Frame.bssid.toString();
-                                var BSSID = new BSSID_template(BSSID_Address, packet.payload.ieee802_11Frame, ieeeMAC_list);
+                                var BSSID = new BSSID_template(BSSID_Address, packet.payload.signalStrength
+                                    , packet.payload.ieee802_11Frame, ieeeMAC_list);
                                 // if the BSSID is listed into the BSSID list
                                 if (that.BSSIDList.hasOwnProperty(BSSID_Address)) {
                                     //if the BSSID was added based on a data frame (not from a beacon)
                                     if (that.BSSIDList[BSSID_Address].beacon == null) {
                                         that.BSSIDList[BSSID_Address] = BSSID;
                                         that.messenger.emit('BSSID', 'new', that.BSSIDList[BSSID_Address]);
-                                        if (that.SSIDList.hasOwnProperty(BSSID.SSID)){
+                                        if (that.SSIDList.hasOwnProperty(BSSID.SSID)) {
                                             that.SSIDList[BSSID.SSID].BSSIDs.push(BSSID_Address);
                                             that.messenger.emit("SSID", 'update', that.SSIDList[BSSID.SSID]);
                                         } else {
@@ -123,7 +124,7 @@ function Sentinelle(capture_interface) {
                                 } else {
                                     that.BSSIDList[BSSID_Address] = BSSID;
                                     that.messenger.emit('BSSID', 'new', that.BSSIDList[BSSID_Address]);
-                                    if (that.SSIDList.hasOwnProperty(BSSID.SSID)){
+                                    if (that.SSIDList.hasOwnProperty(BSSID.SSID)) {
                                         that.SSIDList[BSSID.SSID].BSSIDs.push(BSSID_Address);
                                         that.messenger.emit("SSID", 'update', that.SSIDList[BSSID.SSID]);
                                     } else {
@@ -154,8 +155,10 @@ function Sentinelle(capture_interface) {
                     case 0x0002:
                         var BSSID_Address = packet.payload.ieee802_11Frame.bssid.toString();
                         var STA_Address = null;
+                        var RSSI = null;
                         if (!packet.payload.ieee802_11Frame.flags.fromDS && packet.payload.ieee802_11Frame.flags.toDS) {
                             STA_Address = packet.payload.ieee802_11Frame.transmitter_address.toString();
+                            RSSI = packet.payload.signalStrength;
                         } else if (packet.payload.ieee802_11Frame.flags.fromDS && !packet.payload.ieee802_11Frame.flags.toDS) {
                             STA_Address = packet.payload.ieee802_11Frame.receiver_address.toString();
                         }
@@ -185,9 +188,12 @@ function Sentinelle(capture_interface) {
                                 STA = that.STAList[STA_Address];
                                 that.messenger.emit("STA", "new", STA);
                             }
+                            if (RSSI != null){
+                                STA.RSSI = RSSI;
+                            }
                             // if the BSSID_Address is not in the list
                             if (!that.BSSIDList.hasOwnProperty(BSSID_Address)) {
-                                that.BSSIDList[BSSID_Address] = new BSSID_template(BSSID_Address, null, ieeeMAC_list);
+                                that.BSSIDList[BSSID_Address] = new BSSID_template(BSSID_Address, 0, null, ieeeMAC_list);
                                 that.messenger.emit("BSSID", "new", that.BSSIDList[BSSID_Address])
                             }
                             // if the station was not seen on this BSSID

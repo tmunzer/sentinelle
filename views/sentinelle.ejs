@@ -22,7 +22,7 @@
 </head>
 <body id="top">
 <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
-    <div class="container" style="width:80%" >
+    <div class="container" style="width:80%">
         <!-- Logo -->
         <div id="logo" class="nav navbar-nav navbar-left" style="padding-top: 5px;">
             <i class="fa fa-3x fa-connectdevelop"></i>
@@ -71,49 +71,64 @@
     </div>
 </nav>
 <!-- main container -->
-<div  id="sb-site">
+<div id="sb-site">
     <!-- mib viewer - this section will display the article to load MIB files -->
     <section class="sb-site-content" id="section_action">
         <article style="display: flex;">
             <div style="width: 20%;margin:auto;">
-                    <button type="button" class="btn btn-default" style="margin:0px" onclick="start_stop()">
-                        Sensor:
-                        <a href="#" >
-                            <i id="sentinelle_action" class="fa fa-toggle-off fa-lg"></i>
-                        </a></button>
-                        <div id="sentinelle_status_btn" class="label label-success" style="margin:0px; padding:5px;">
-                            Status :
-                            <span id="sentinelle_status_text"></span>
-                            <i id="sentinelle_status_icon"></i>
-                        </div>
+                <button type="button" class="btn btn-default" style="margin:0px" onclick="start_stop()">
+                    Sensor:
+                    <a href="#">
+                        <i id="sentinelle_action" class="fa fa-toggle-off fa-lg"></i>
+                    </a></button>
+                <div id="sentinelle_status_btn" class="label label-success" style="margin:0px; padding:5px;">
+                    Status :
+                    <span id="sentinelle_status_text"></span>
+                    <i id="sentinelle_status_icon"></i>
+                </div>
             </div>
             <div style="width: 50%;margin:auto;">
                 <a href="#" onclick="goTo('display_preview', 'oid_'+$('#autocomplete').val());">
                     <i class="fa fa-search fa-lg"></i>
                 </a>
-                <input name="filter_list" id="autocomplete" placeholder="Search" class="search" onkeypress="return enterKey(event)" type="text">
+                <input name="filter_list" id="autocomplete" placeholder="Search" class="search"
+                       onkeypress="return enterKey(event)" type="text">
             </div>
             <div style="width: 30%;margin:auto;text-align: center">
                 <div class="btn-group" role="group">
                     <button type="button" class="btn btn-default" disabled="disabled">Sort by:</button>
-                    <button type="button" id="sort-by-ssid" class="btn btn-default btn-selected" onclick="sortApList('ssid')">SSID</button>
-                    <button type="button" id="sort-by-bssid" class="btn btn-default" onclick="sortApList('bssid')">BSSID</button>
-                    <button type="button" id="sort-by-company" class="btn btn-default" onclick="sortApList('company')">Company</button>
+                    <button type="button" id="sort-by-ssid" class="btn btn-default btn-selected"
+                            onclick="sortApList('ssid')">SSID
+                    </button>
+                    <button type="button" id="sort-by-bssid" class="btn btn-default" onclick="sortApList('bssid')">
+                        BSSID
+                    </button>
+                    <button type="button" id="sort-by-company" class="btn btn-default" onclick="sortApList('company')">
+                        Company
+                    </button>
                 </div>
-                    <div class="btn-group" role="group">
-                        <button type="button" class="btn btn-default" disabled="disabled">Order:</button>
-                        <button type="button" id="order-by-asc" class="btn btn-default btn-selected btn-sort-order" onclick="orderApList('asc')">Asc</button>
-                        <button type="button" id="order-by-desc" class="btn btn-default btn-sort-order" onclick="orderApList('desc')">Desc</button>
-                        </div>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-default" disabled="disabled">Order:</button>
+                    <button type="button" id="order-by-asc" class="btn btn-default btn-selected btn-sort-order"
+                            onclick="orderApList('asc')">Asc
+                    </button>
+                    <button type="button" id="order-by-desc" class="btn btn-default btn-sort-order"
+                            onclick="orderApList('desc')">Desc
+                    </button>
                 </div>
+            </div>
         </article>
     </section>
+
     <!-- mib viewer - this section will display the MIB files details -->
     <section class="sb-site-content" id="section_display_infra">
         <article id="article_infra">
+            <div id="ssid_list" style="float:right">
 
+            </div>
         </article>
     </section>
+
     <!-- mib viewer - this section will display MIB tree -->
     <section class="sb-site-content" id="section_display_ap" hidden="hidden">
         <article id="article_ap_list">
@@ -174,93 +189,111 @@
     var socket = io.connect('http://10.0.10.3:80');
 
 
-// Socket: Rx
-    socket.on("clear_all", function(){
+    // Socket: Rx
+    socket.on("clear_all", function () {
         BSSIDList = [];
         SSIDList = [];
         STAList = [];
         $("#ap_list").empty();
     })
-    socket.on('sentinelle_status', function(status){
+    socket.on('sentinelle_status', function (status) {
         sentinelle_status = status;
-        if (sentinelle_status=="running"){
+        if (sentinelle_status == "running") {
             $("#sentinelle_status_text").text(sentinelle_status)
-            document.getElementById("sentinelle_status_icon").className ="fa fa-spinner fa-pulse";
+            document.getElementById("sentinelle_status_icon").className = "fa fa-spinner fa-pulse";
             document.getElementById("sentinelle_action").className = "fa fa-toggle-on fa-lg";
             document.getElementById("sentinelle_status_btn").className = "label label-success";
         } else {
             $("#sentinelle_status_text").text(sentinelle_status);
-            document.getElementById("sentinelle_status_icon").className ="fa fa-spinner";
+            document.getElementById("sentinelle_status_icon").className = "fa fa-spinner";
             document.getElementById("sentinelle_action").className = "fa fa-toggle-off fa-lg";
             document.getElementById("sentinelle_status_btn").className = "label label-warning";
         }
     })
-    socket.on('SSID', function(action, SSID){
-        console.log(SSID.SSID);
-        console.log(SSID.BSSIDs);
+    socket.on('SSID', function (action, SSID) {
+        //console.log(SSID.SSID);
+        //console.log(SSID.BSSIDs);
+        SSID.last_update = new Date().toLocaleString();
         SSIDList[SSID.SSID] = SSID;
-        var html = "<div>"
-        for (var BSSID in SSID.BSSIDs){
-            html += '<div>'+SSID.BSSIDs[BSSID]+"</div><br>"
-        }
-        html += "</div><br><br>";
-        if (document.getElementById("ssid_"+SSID.SSID) != null){
-            document.getElementById("ssid_"+SSID.SSID).innerHTML = html;
+        if (document.getElementById("ssid_" + SSID.SSID) != null) {
+            document.getElementById("ssid_" + SSID.SSID).innerHTML = format_infrastructure(SSID);
         } else {
-            html += "<span>"+SSID.SSID+"</span>"
-            $("#article_infra").append(html);
+            $("#article_infra").append(format_infrastructure(SSID));
         }
+        //sortDiv($('#article_infra'), $('#article_infra').find('.ssid'), sort_by);
     })
-    socket.on('BSSID', function(action, BSSID) {
-       // console.log(action);
-       // console.log(BSSID);
-        BSSIDList[BSSID['BSSID_Address']]=BSSID;
-        if (document.getElementById('ap_'+BSSID['BSSID_Address']) != null){
-            document.getElementById('ap_'+BSSID['BSSID_Address']).innerHTML =format_ap_list(BSSID, false);
+    socket.on('BSSID', function (action, BSSID) {
+        // console.log(action);
+        //console.log(BSSID);
+        BSSID.last_update = new Date().toLocaleString();
+        BSSIDList[BSSID.BSSID_Address] = BSSID;
+        if (document.getElementById('ap_' + BSSID.BSSID_Address) != null) {
+            document.getElementById('ap_' + BSSID.BSSID_Address).innerHTML = format_ap_list(BSSID, false);
         } else {
             $("#ap_list").append(format_ap_list(BSSID, true));
         }
-        sortDiv( $('#ap_list'), $('#ap_list').find('.ap_list'), sort_by);
-        $('#ap_'+BSSID['BSSID_Address']).toggle('highlight');
+        sortDiv($('#ap_list'), $('#ap_list').find('.ap_list'), sort_by);
     })
-    socket.on("STA", function(action, STA){
+    socket.on("STA", function (action, STA) {
+        STA['last_update'] = new Date().toLocaleString();
+        STAList[STA.MAC] = STA;
         console.log(action);
         console.log(STA);
     })
 
     // Control the sensor
-    function start_stop(){
-        if (sentinelle_status == "running"){
+    function start_stop() {
+        if (sentinelle_status == "running") {
             socket.emit("stop");
         } else {
             socket.emit("start");
         }
     }
 
+    function format_infrastructure(SSID) {
+        var ds = '<div id="' + SSID["SSID"] + '" style="background-color:#AEAEAE">SSID: ' + SSID["SSID"];
+        for (var BSSID in SSID.BSSIDs) {
+            var current_BSSID = SSID.BSSIDs[BSSID];
+            ds += '<div id="' + SSID["SSID"] + '_' + current_BSSID + '" style="background-color:#EEEEEE; padding-left:20px">' +
+                    current_BSSID + ' (' + BSSIDList[current_BSSID].RSSI + ')';
+            for (var STA in BSSIDList[current_BSSID].associated_STA) {
+                var current_STA = BSSIDList[current_BSSID].associated_STA[STA];
+                console.log(current_STA);
+                ds += '<div id="' + current_BSSID + '_' + current_STA + '" style="padding-left:20px">' +
+                       current_STA + ' (' + STAList[current_STA].RSSI + ')';
+                ds += '</div>';
+            }
+            ds += '</div>';
+        }
+        ds += '</div>';
+        return ds;
+    }
 
     // generate HTML code to display a new AP in the AP list
-    function format_ap_list(BSSID, new_ap){
+    function format_ap_list(BSSID, is_new_ap) {
         var html_ap = '';
-        if (new_ap){
+        if (is_new_ap) {
             html_ap += "<div " +
                     "class='ap_list' " +
-                    "id='ap_" + BSSID["BSSID_Address"] + "' " +
-                    "data-bssid='"+BSSID["BSSID_Address"]+"' " +
-                    "data-ssid='"+BSSID["SSID"] +  "' " +
-                    "data-company='"+BSSID["company"] + "' "+
+                    "id='ap_" + BSSID.BSSID_Address + "' " +
+                    "data-bssid='" + BSSID.BSSID_Address + "' " +
+                    "data-ssid='" + BSSID.ssid + "' " +
+                    "data-company='" + BSSID.company + "' " +
                     ">";
         }
-        html_ap += "BSSID: <a href='#' onclick='tab_ap(\"" + BSSID["BSSID_Address"] + "\")'>"
-                + BSSID["BSSID_Address"] + "</a><br>"
-                + "SSID: " + BSSID["SSID"] + "<br>"
-                + "Company: " + BSSID['company'] + "<br>"
-                + "Channel: " + BSSID["channel"] + "<br>"
-                + "Country: " + BSSID["country"] + "<br>"
-                + "Rates: " + BSSID["rates"] + "<br>"
-                + "Extended Rates: " + BSSID["extended_rates"] + "<br>"
-                + "Connected Stations: " + BSSID["associated_STA"].length + "<br>"
-                + "Raw Data: " +BSSID["beacon"] + "<br>";
-        if (new_ap) {
+        html_ap += "BSSID: <a href='#' onclick='tab_ap(\"" + BSSID.BSSID_Address + "\")'>"
+                + BSSID.BSSID_Address + "</a><br>"
+                + "SSID: " + BSSID.SSID + "<br>"
+                + "Company: " + BSSID.company + "<br>"
+                + "Channel: " + BSSID.channel + "<br>"
+                + "Country: " + BSSID.country + "<br>"
+                + "RSSI: " + BSSID.RSSI + "dBm<br>"
+                + "Rates: " + BSSID.rates + "<br>"
+                + "Extended Rates: " + BSSID.extended_rates + "<br>"
+                + "Connected Stations: " + BSSID.associated_STA.length + "<br>"
+                + "Raw Data: " + BSSID.beacon + "<br>"
+                + "Last Update: " + BSSID.last_update;
+        if (is_new_ap) {
             html_ap += "</div>";
         }
         return html_ap;
@@ -269,56 +302,56 @@
 
     // sort the displayed items
     // called from the AP list
-    function sortApList(value){
+    function sortApList(value) {
         sort_by = value;
         $("[id^=sort-by]").removeClass("btn-selected");
-        $("#sort-by-"+value).addClass("btn-selected");
-        sortDiv( $('#ap_list'),$('#ap_list').find('.ap_list'), sort_by);
+        $("#sort-by-" + value).addClass("btn-selected");
+        sortDiv($('#ap_list'), $('#ap_list').find('.ap_list'), sort_by);
     }
 
-    function orderApList(value){
-        sort_order=value;
+    function orderApList(value) {
+        sort_order = value;
         $("[id^=order-by]").removeClass("btn-selected");
-        $("#order-by-"+value).addClass("btn-selected");
-        sortDiv( $('#ap_list'),$('#ap_list').find('.ap_list'), sort_by);
+        $("#order-by-" + value).addClass("btn-selected");
+        sortDiv($('#ap_list'), $('#ap_list').find('.ap_list'), sort_by);
     }
 
     // ascending order
-    function SortAsc(a, b){
+    function SortAsc(a, b) {
         var aValue = a.toLowerCase();
         var bValue = b.toLowerCase();
         return ((aValue < bValue) ? -1 : ((aValue > bValue) ? 1 : 0));
     }
 
     // descending order
-    function SortDesc(a, b){
+    function SortDesc(a, b) {
         var aValue = a.toLowerCase();
         var bValue = b.toLowerCase();
         return ((aValue > bValue) ? -1 : ((aValue < bValue) ? 1 : 0));
     }
 
     // function dealing with the sort feature
-    function sortDiv(target, divs){
+    function sortDiv(target, divs) {
         var tempArray = [];
 
-        $(divs).each(function(i,o){
+        $(divs).each(function (i, o) {
             tempArray.push($(o).data(sort_by));
         });
 
-        if (sort_order=="asc"){
+        if (sort_order == "asc") {
             tempArray.sort(SortAsc);
         } else {
             tempArray.sort(SortDesc);
         }
 
-        $(tempArray).each(function(i,o){
-            target.append(target.find('.ap_list[data-'+sort_by+'="'+o+'"]'));
+        $(tempArray).each(function (i, o) {
+            target.append(target.find('.ap_list[data-' + sort_by + '="' + o + '"]'));
         });
 
     }
 
-// display / hide article from the AP details (list or details)
-    function tab_ap(BSSID){
+    // display / hide article from the AP details (list or details)
+    function tab_ap(BSSID) {
         if (BSSID == null) {
             $("#article_ap_list").show();
             $("#article_ap_detail").hide();
@@ -351,9 +384,10 @@
 
     }
 
-    $(document).ready(function() {
+    $(document).ready(function () {
         select_tab('display_ap');
     })
+
 </script>
 </body>
 </html>

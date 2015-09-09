@@ -4,6 +4,7 @@ function STA(STA_Address, ieeeMAC) {
     this.associated_BSSID = null;
     this.OUI = this.MAC.replace(/:/g, '').substr(0, 6).toUpperCase();
     this.company = ieeeMAC[this.OUI] || "Unknown";
+    this.RSSI = 0;
 }
 
 

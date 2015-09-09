@@ -1,9 +1,9 @@
-function BSSID(BSSID_Address, payload, ieeeMAC) {
+function BSSID(BSSID_Address, RSSI, payload, ieeeMAC) {
     this.BSSID_Address = BSSID_Address;
     this.associated_STA = [];
     this.OUI = this.BSSID_Address.replace(/:/g, '').substr(0, 6).toUpperCase();
     this.company = ieeeMAC[this.OUI] || "Unknown";
-
+    this.RSSI = RSSI;
 
     if (payload == null) {
         this.beacon = null;
