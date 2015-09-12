@@ -19,7 +19,7 @@ function format_infrastructure(SSID, is_new) {
         for (var STA in BSSIDList[current_BSSID].associated_STA) {
             STA_count++;
             var current_STA = BSSIDList[current_BSSID].associated_STA[STA];
-            ds += '<div id="' + current_BSSID + '_' + current_STA + '" style="padding-left:20px">' +
+            ds += '<div id="' + current_STA + '" style="padding-left:20px">' +
                 current_STA + ' (' + STAList[current_STA].RSSI + ' dBm)';
             ds += '</div>';
         }

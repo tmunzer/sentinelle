@@ -102,8 +102,7 @@
                     <button type="button" id="sort-by-rssi" class="btn btn-default" onclick="sortList('rssi')">
                         RSSI
                     </button>
-                    <button type="button" id="sort-by-ssid" class="btn btn-default btn-selected"
-                            onclick="sortList('ssid')">SSID
+                    <button type="button" id="sort-by-ssid" class="btn btn-default btn-selected" onclick="sortList('ssid')">SSID
                     </button>
                     <button type="button" id="sort-by-bssid" class="btn btn-default" onclick="sortList('bssid')">
                         BSSID
@@ -251,7 +250,9 @@
     }
 
     // function dealing with the sort feature
-    function sortDiv(target, divs) {
+    function sortDiv() {
+        var target = $('#' + current_list);
+        var divs = target.find('.' + current_list);
         var tempArray = [];
 
         $(divs).each(function (i, o) {
@@ -273,11 +274,13 @@
 
     function select_tab(tab_name, param) {
         var html = "";
+        var sort_by_buttons = $("[id^=sort-by]");
+        var order_by_buttons = $("[id^=order-by]");
         $('#section_display').empty();
-        $("[id^=sort-by]").prop('disabled', true);
-        $("[id^=sort-by]").removeClass("btn-selected");
-        $("[id^=order-by]").prop('disabled', true);
-        $("[id^=order-by]").removeClass("btn-selected");
+        sort_by_buttons.prop('disabled', true);
+        sort_by_buttons.removeClass("btn-selected");
+        order_by_buttons.prop('disabled', true);
+        order_by_buttons.removeClass("btn-selected");
 
         $("[id^=nav_]").removeClass("nav_selected");
         switch (tab_name) {
@@ -285,21 +288,26 @@
                 current_list = "infra_list";
                 $("#nav_display_infra").addClass("nav_selected");
 
-                $("[id^=order-by]").prop('disabled', false);
+                order_by_buttons.prop('disabled', false);
                 $("#order-by-asc").addClass("btn-selected");
 
                 html = tab_infra();
+
                 break;
             case "display_ap":
                 current_list = "ap_list";
                 $("#nav_display_ap").addClass("nav_selected");
 
-                $("[id^=sort-by]").prop('disabled', false);
+                sort_by_buttons.prop('disabled', false);
                 $("#sort-by-ssid").addClass("btn-selected");
 
-                $("[id^=order-by]").prop('disabled', false);
+                order_by_buttons.prop('disabled', false);
                 $("#order-by-asc").addClass("btn-selected");
                 html = tab_ap();
+
+                sortList('ssid');
+                orderList('asc');
+
                 break;
             case "ap_details":
                 $("#nav_display_ap").addClass("nav_selected");
@@ -319,6 +327,8 @@
         }
 
         $('#section_display').append(html);
+        sortDiv();
+
     }
 
     // sort the displayed items
@@ -327,14 +337,14 @@
         sort_by = value;
         $("[id^=sort-by]").removeClass("btn-selected");
         $("#sort-by-" + value).addClass("btn-selected");
-        sortDiv($('#' + current_list), $('#' + current_list).find('.' + current_list), sort_by);
+        sortDiv();
     }
 
     function orderList(value) {
         sort_order = value;
         $("[id^=order-by]").removeClass("btn-selected");
         $("#order-by-" + value).addClass("btn-selected");
-        sortDiv($('#' + current_list), $('#' + current_list).find('.' + current_list), sort_by);
+        sortDiv();
     }
 
     $(document).ready(function () {

@@ -3,7 +3,7 @@ var app = express();
 var server = require('http').createServer(app);
 var io = require('socket.io').listen(server);
 
-var Sentinelle = require("./sentinelle");
+var Sentinelle = require(__dirname + "/sentinelle");
 var sentinelle = new Sentinelle("wlan0mon");
 var server_port = 80;
 
@@ -11,7 +11,7 @@ var server_port = 80;
 // web server routes
 app.use(express.static(__dirname + '/static'));
 app.get('/', function (req, res) {
-    res.render("sentinelle.ejs");
+    res.render(__dirname + "/views/sentinelle.ejs");
 });
 
 //sentinelle.s_start("wlan0mon");
