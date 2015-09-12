@@ -5,6 +5,16 @@ function BSSID(BSSID_Address, RSSI, payload, ieeeMAC) {
     this.company = ieeeMAC[this.OUI] || "Unknown";
     this.RSSI = RSSI;
 
+    this.beaconInt = payload.beacon.beaconInt;
+    this.capabilitiesInfo = payload.beacon.capabilitiesInfo;
+
+
+    this.SSID = undefined;
+    this.rates = undefined;
+    this.channel = undefined;
+    this.extended_rates = undefined;
+    this.country = undefined;
+
     if (payload == null) {
         this.beacon = null;
     } else {
@@ -28,6 +38,9 @@ function BSSID(BSSID_Address, RSSI, payload, ieeeMAC) {
                         //		    console.log(payload.beacon.tags[tag].channel);
                         this.channel = payload.beacon.tags[tag].channel;
                         break;
+                    //TIM
+                    case 5:
+                        this.dtimPeriod = payload.beacon.tags[tag].dtimPeriod;
                     //extended rates
                     case 50:
                         //		    console.log(payload.beacon.tags[tag].value);

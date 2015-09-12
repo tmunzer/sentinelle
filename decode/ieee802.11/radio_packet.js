@@ -16,12 +16,16 @@ function PresentFieldFlags() {
     this.dbAntennaSignal = undefined;
     this.dbAntennaNoise = undefined;
     this.rxFlags = undefined;
+    this.channelPlus = undefined;
+    this.htInformation = undefined;
+    this.ampdu = undefined;
+    this.vhtInformation = undefined;
 }
 
 //flags should be a UInt32LE
 PresentFieldFlags.prototype.decode = function decode (flags) {
     var r = flags;
-    this.tsft = Boolean(r & 0x0001) ;
+    this.tsft = Boolean(r & 0x0001);
     this.flags = Boolean((r >> 1) & 0x0001);
     this.rate = Boolean((r >> 2) & 0x0001);
     this.channel = Boolean((r >> 3) & 0x0001);
@@ -36,6 +40,10 @@ PresentFieldFlags.prototype.decode = function decode (flags) {
     this.dbAntennaSignal = Boolean((r >> 12) & 0x0001);
     this.dbAntennaNoise = Boolean((r >> 13) & 0x0001);
     this.rxFlags = Boolean((r >> 14) & 0x0001);
+    this.channelPlus = Boolean((r >> 18) & 0x0001) ;
+    this.htInformation = Boolean((r >> 19) & 0x0001);
+    this.ampdu = Boolean((r >> 20) & 0x0001);
+    this.vhtInformation = Boolean((r >> 21) & 0x0001);
     return this;
 };
 
@@ -71,24 +79,29 @@ RadioPacket.prototype.decode = function (raw_packet, offset) {
     if(p.tsft) { offset += 8; }
 
     //Flags
-    if(p.flags) { offset += 1; }
+    if(p.flags) {
+    //TODO can't read flags... Always at 00
+        this.headerFlags = raw_packet.readInt8(offset, true).toString(2);
+        offset += 1;
+    }
 
     if(p.rate) { offset += 1; }
 
     if(p.channel) {
         //Frequency
-        this.frequency = raw_packet.readUInt16LE(offset, true);
+        this.frequency = raw_packet.readUInt16LE(offset);
+        offset += 2;
         //channel flags are the 2 bytes after channel freq
-        offset += 4;
+        offset +=2;
     }
 
     if(p.fhss) { offset += 2; }
 
-    if(p.signalStrength) { //in dbi
+    if(p.signalStrength) { //in dbm
         this.signalStrength = raw_packet.readInt8(offset++);
     }
 
-    if(p.signalNoise) { //in dbi
+    if(p.signalNoise) { //in dbm
         this.signalNoise = raw_packet.readInt8(offset++);
     }
     if(p.lockQuality) { offset += 2; }

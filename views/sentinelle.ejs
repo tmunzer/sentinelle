@@ -129,8 +129,6 @@
     </section>
 
 
-
-
 </div>
 <!-- mib viewer - this is the right pane to display infos  -->
 <nav id="info_details" class="sb-slidebar sb-right sb-style-push">
@@ -178,28 +176,38 @@
         }
     })
     socket.on('SSID', function (action, SSID) {
-        console.log(SSID.SSID);
+        //console.log(SSID.SSID);
         //console.log(SSID.BSSIDs);
         SSID.last_update = new Date().toLocaleString();
         SSIDList[SSID.SSID] = SSID;
-        if (document.getElementById("ssid_" + SSID.SSID) != null) {
-            document.getElementById("ssid_" + SSID.SSID).innerHTML = format_infrastructure(SSID);
+        if (document.getElementById(SSID.SSID) != null) {
+            document.getElementById(SSID.SSID).innerHTML = format_infrastructure(SSID, false);
         } else {
-            $("#infra_list").append(format_infrastructure(SSID));
+            $("#infra_list").append(format_infrastructure(SSID, true));
         }
-        //sortDiv($('#article_infra'), $('#article_infra').find('.ssid'), sort_by);
+        sortDiv($('#infra_list'), $('#infra_list').find('.infra_list'), sort_by);
     })
     socket.on('BSSID', function (action, BSSID) {
-        // console.log(action);
-        //console.log(BSSID);
+        //console.log(action);
         BSSID.last_update = new Date().toLocaleString();
         BSSIDList[BSSID.BSSID_Address] = BSSID;
-        if (document.getElementById('ap_' + BSSID.BSSID_Address) != null) {
-            document.getElementById('ap_' + BSSID.BSSID_Address).innerHTML = format_ap_list(BSSID, false);
-        } else {
-            $("#ap_list").append(format_ap_list(BSSID, true));
+        if (document.getElementById('infra_list') != null) {
+            if (SSIDList[BSSID.SSID] != null) {
+                if (document.getElementById(BSSID.SSID) != null) {
+                    document.getElementById(BSSID.SSID).innerHTML = format_infrastructure(SSIDList[BSSID.SSID], false);
+                } else {
+                    $("#infra_list").append(format_infrastructure(SSIDList[BSSID.SSID], true));
+                }
+            }
+            sortDiv($('#infra_list'), $('#infra_list').find('.infra_list'), sort_by);
+        } else if (document.getElementById('ap_list') != null) {
+            if (document.getElementById('ap_' + BSSID.BSSID_Address) != null) {
+                document.getElementById('ap_' + BSSID.BSSID_Address).innerHTML = format_ap_list(BSSID, false);
+            } else {
+                $("#ap_list").append(format_ap_list(BSSID, true));
+            }
+            sortDiv($('#ap_list'), $('#ap_list').find('.ap_list'), sort_by);
         }
-        sortDiv($('#ap_list'), $('#ap_list').find('.ap_list'), sort_by);
     })
     socket.on("STA", function (action, STA) {
         STA['last_update'] = new Date().toLocaleString();
@@ -223,7 +231,7 @@
         try {
             var aValue = a.toLowerCase();
             var bValue = b.toLowerCase();
-        } catch(e) {
+        } catch (e) {
             var aValue = a;
             var bValue = b;
         }
@@ -232,13 +240,13 @@
 
     // descending order
     function SortDesc(a, b) {
-    try {
-        var aValue = a.toLowerCase();
-        var bValue = b.toLowerCase();
-    } catch(e) {
-        var aValue = a;
-        var bValue = b;
-    }
+        try {
+            var aValue = a.toLowerCase();
+            var bValue = b.toLowerCase();
+        } catch (e) {
+            var aValue = a;
+            var bValue = b;
+        }
         return ((aValue > bValue) ? -1 : ((aValue < bValue) ? 1 : 0));
     }
 
@@ -257,7 +265,7 @@
         }
 
         $(tempArray).each(function (i, o) {
-            target.append(target.find('.ap_list[data-' + sort_by + '="' + o + '"]'));
+            target.append(target.find('.'+ current_list + '[data-' + sort_by + '="' + o + '"]'));
         });
 
     }
@@ -272,14 +280,10 @@
         $("[id^=order-by]").removeClass("btn-selected");
 
         $("[id^=nav_]").removeClass("nav_selected");
-        switch (tab_name){
+        switch (tab_name) {
             case "display_infra":
                 current_list = "infra_list";
                 $("#nav_display_infra").addClass("nav_selected");
-
-                $("#sort-by-rssi").prop('disabled', false);
-                $("#sort-by-ssid").prop('disabled', false);
-                $("#sort-by-ssid").addClass("btn-selected");
 
                 $("[id^=order-by]").prop('disabled', false);
                 $("#order-by-asc").addClass("btn-selected");
@@ -323,14 +327,14 @@
         sort_by = value;
         $("[id^=sort-by]").removeClass("btn-selected");
         $("#sort-by-" + value).addClass("btn-selected");
-        sortDiv($('#'+current_list), $('#'+current_list).find('.'+current_list), sort_by);
+        sortDiv($('#' + current_list), $('#' + current_list).find('.' + current_list), sort_by);
     }
 
     function orderList(value) {
         sort_order = value;
         $("[id^=order-by]").removeClass("btn-selected");
         $("#order-by-" + value).addClass("btn-selected");
-        sortDiv($('#'+current_list), $('#'+current_list).find('.'+current_list), sort_by);
+        sortDiv($('#' + current_list), $('#' + current_list).find('.' + current_list), sort_by);
     }
 
     $(document).ready(function () {

@@ -29,6 +29,7 @@ RadioManagementFrameTag.prototype.decode = function decode(raw_packet, offset) {
             break;
         case 5:
             this.type = "TIM"; //Traffic Indicator Map
+            this.dtimPeriod = this.decode_DTIM(this.value);
             break;
         case 32:
             this.type = "power_constraint"; //802.11h
@@ -89,7 +90,17 @@ RadioManagementFrameTag.prototype.decode_rates = function(raw_data){
     return rates_list;
 };
 
-RadioManagementFrameTag.prototype.decode_capabilities= function(raw_data) {
+RadioManagementFrameTag.prototype.decode_DTIM= function(raw_data) {
+    var offset = 0;
+
+    //skip DTIM count
+    offset += 1;
+    var dtimPeriod = parseInt(raw_data.slice(offset , offset + 1).toString('hex'));
+
+    return dtimPeriod;
+};
+
+RadioManagementFrameTag.prototype.decode_capabilities = function(raw_data) {
     var offset = 0;
     var rsn_ver = parseInt(raw_data.slice(offset , offset + 1).toString('hex'));
 
@@ -125,6 +136,30 @@ RadioManagementFrameTag.prototype.decode_country = function(raw_data){
     //Improve this decode function to get the channels list and parameters
     var country = raw_data.slice(0, 2);
     return country.toString();
+};
+
+RadioManagementFrameTag.prototype.decode_htCapabilities = function(raw_data){
+    var offset = 0;
+    var htCapabilitiesInfo = undefined;
+    var i = raw_data.readUInt16LE(offset);
+    htCapabilitiesInfo.ldpcCodingCapabilities = Boolean(i & 0x0001);
+    htCapabilitiesInfo.supportChannelWidth = Boolean((i >> 1) & 0x0001);
+    htCapabilitiesInfo.smPowerSave = ((i >> 2) & 0x0011).toString(16);
+    htCapabilitiesInfo.greenField = Boolean((i >> 4) & 0x0001);
+    htCapabilitiesInfo.shortGI20 = Boolean((i >> 5) & 0x0001);
+    htCapabilitiesInfo.shortGI40 = Boolean((i >> 6) & 0x0001);
+    htCapabilitiesInfo.txStbc = Boolean((i >> 7) & 0x0001);
+    htCapabilitiesInfo.rxStbc = ((i >> 8) & 0x0011).toString(16);
+    htCapabilitiesInfo.delayedBlockAck = Boolean((i >> 10) & 0x0001);
+    htCapabilitiesInfo.maxAmsduLength = Boolean((i >> 11) & 0x0001);
+    htCapabilitiesInfo.dsssCCK = Boolean((i >> 12) & 0x0001);
+    htCapabilitiesInfo.psmp = Boolean((i >> 13) & 0x0001);
+    htCapabilitiesInfo.fortyMHzIntolerent = Boolean((i >> 14) & 0x0001);
+    htCapabilitiesInfo.lSigTxopProtection = Boolean((i >> 715) & 0x0001);
+    offset += 2;
+    //TODO - currently skipping AMPDU parameters
+    offset += 1;
+    return htCapabilitiesInfo;
 };
 
 
