@@ -21,8 +21,8 @@ sentinelle.messenger.on('status', function (status) {
     console.log("sentinelle status: ", status);
     io.sockets.emit("sentinelle_status", status);
 });
-sentinelle.messenger.on('ssid', function (ssid, bssidList) {
-    io.sockets.emit('ssid', ssid, bssidList);
+sentinelle.messenger.on('SSID', function (ssid, bssidList) {
+    io.sockets.emit('SSID', ssid, bssidList);
 });
 sentinelle.messenger.on('BSSID', function (action, bssid) {
     io.sockets.emit('BSSID', action, bssid);

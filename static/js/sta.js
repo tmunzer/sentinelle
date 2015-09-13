@@ -9,11 +9,11 @@ function tab_sta() {
 
 // generate HTML code to display a new AP in the AP list
 function format_sta_list(station, is_new_sta) {
-    console.log(station);
     var bssid = bssidList[station.associatedBssid];
     var html_ap = '';
     var lock = "";
-    var ssid = "";
+    var ssid_html = "";
+    var bssid_html = "";
     if (is_new_sta) {
         html_ap += "<div " +
             "class='ap_list' " +
@@ -32,16 +32,19 @@ function format_sta_list(station, is_new_sta) {
         } else {
             lock = "fa-unlock";
         }
+        bssid_html = "<a href=# onclick='select_tab(\"ap_details\", \"" + bssid.bssidAddress + "\")'>" +
+            bssid.bssidAddress + "</a>";
     }
     if (bssid && bssid.ssid){
-        ssid = bssid.ssid;
+        ssid_html = bssid.ssid;
     }
-    html_ap += "<span>" + ssid + " <i class='fa " + lock + "'></i></span><br/>"
-        + "MAC Address: <a href='#' onclick='select_tab(\"sta_details\", \"" + station.mac + "\")'>"
-        + station.mac + "</a><br>"
-        + "Company: " + station.company + "<br>"
-        + "RSSI: " + station.rssi + "dBm<br>"
-        + "Configured SSIDs: " + station.probeRequest.length + "<br>"
+    html_ap += '<a href=# onclick="select_tab(\'sta_details\', \'' + station.mac + '\')">'
+        + "<i class='fa fa-laptop'></i> " + station.mac + "</a><br/>"
+        + "Company: " + station.company + "<br/>"
+        + "RSSI: " + station.rssi + "dBm<br/>"
+        + "Configured SSIDs: " + station.probeRequest.length + "<br/>"
+        + "SSID: <span>" + ssid_html + " <i class='fa " + lock + "'></i></span><br/>"
+        + "Associated with: " + bssid_html + "<br/>"
         + "Last Update: " + station.last_update;
     if (is_new_sta) {
         html_ap += "</div>";
@@ -51,21 +54,25 @@ function format_sta_list(station, is_new_sta) {
 
 function tab_sta_details(stationMac) {
     var station = stationList[stationMac];
-    var bssid = bssidList[station.associatedBssid];
+    var ssid_html = " is not connected";
+    if (station.associatedBssid != undefined){
+        var bssid = bssidList[station.associatedBssid];
+        ssid_html = " is connected on " + bssid.ssid
+    }
     console.log(station);
     $("#nav_display_ssid").addClass("nav_selected");
     var html = "<article id='sta_details' style='float: left'>" +
-        "<h2><i class='fa fa-laptop fa-lg'>" + station.mac + " on " + bssid.ssid + "</i></h2>" +
+        "<h2><i class='fa fa-laptop fa-lg'>" + station.mac + ssid_html + "</i></h2>" +
         "<div style='float: left; width: 100%'>" +
         "<div style='float: left; width: 50%'>" +
-        "Company: " + station.company + " (" + station.oui + ")<br>" +
-        "<br>" +
-        "RSSI: " + station.rssi + "<br>" +
+        "Company: " + station.company + " (" + station.oui + ")<br/>" +
+        "<br/>" +
+        "RSSI: " + station.rssi + "<br/>" +
         '</div>' +
         '<div>' +
         'Configured SSIDs: ' + "<span class='badge'>" + station.probeRequest.length + "</span>";
-    for (var pr in station.probe_requests) {
-        html += '<div>' + station.probe_requests[pr] +'</div>';
+    for (var pr in station.probeRequest) {
+        html += '<div>' + station.probeRequest[pr] +'</div>';
     }
     html += "</div>" +
         "</div>" +

@@ -20,7 +20,9 @@ function format_infrastructure(ssid, is_new) {
             stationCount++;
             var currentStation = bssidList[currentBssid].associatedStations[station];
             ds += '<div id="' + currentStation + '" style="padding-left:20px">' +
-                '<a href=# onclick="tab_sta_details(\'' + currentStation + '\')">' + currentStation + '</a> (' + stationList[currentStation].rssi + ' dBm)';
+                "<a href='#' onclick='select_tab(\"sta_details\", \"" + currentStation + "\")'>" +
+                currentStation + "</a>" +
+                " (" + stationList[currentStation].rssi + ' dBm)';
             ds += '</div>';
         }
         ds += '</div>';

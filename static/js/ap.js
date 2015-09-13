@@ -61,7 +61,9 @@ function tab_ap_details(bssidAddress) {
     for (var station in bssid.associatedStations) {
         var currentStation = bssid.associatedStations[station];
         html += '<div id="' + currentStation + '" style="padding-left:20px">' +
-            currentStation + ' (' + stationList[currentStation].rssi + ' dBm)</div>';
+            "<a href='#' onclick='select_tab(\"sta_details\", \"" + currentStation + "\")'>" +
+            currentStation + "</a>" +
+            ' (' + stationList[currentStation].rssi + ' dBm)</div>';
     }
     html += "</div>" +
         "</div>" +

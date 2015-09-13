@@ -19,8 +19,8 @@ STA.prototype.new_probe = function(payload) {
                 //ssid
                 case 0:
                     if (tags[tag].ssid != ""){
-                        if (!this.probeRequest.hasOwnProperty(tags[tag].ssid)) {
-                            this.probeRequest[tags[tag].ssid.toString()] = payload.probe.tags[tag].ssid;
+                        if (this.probeRequest.indexOf(tags[tag].ssid) < 0) {
+                            this.probeRequest.push(payload.probe.tags[tag].ssid);
                             console.log("probe " + tags[tag].ssid);
                             console.log(this);
                             updated = true;
