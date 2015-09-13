@@ -1,89 +1,94 @@
 function tab_ap() {
     var html = "<article id='ap_list' style='float:left'>";
-    for (var BSSID in BSSIDList) {
-        html += format_ap_list(BSSIDList[BSSID], true);
+    for (var bssid in bssidList) {
+        html += format_ap_list(bssidList[bssid], true);
     }
     html += '</article>';
     return html;
 }
 
 // generate HTML code to display a new AP in the AP list
-function format_ap_list(BSSID, is_new_ap) {
+function format_ap_list(bssid, is_new_ap) {
+    //console.log(BSSID);
     var html_ap = '';
+    var lock = "";
     if (is_new_ap) {
         html_ap += "<div " +
             "class='ap_list' " +
-            "id='" + BSSID.BSSID_Address + "' " +
-            "data-bssid='" + BSSID.BSSID_Address + "' " +
-            "data-ssid='" + BSSID.SSID + "' " +
-            "data-company='" + BSSID.company + "' " +
-            "data-rssi='" + BSSID.RSSI.toString() + "' " +
+            "id='" + bssid.bssidAddress + "' " +
+            "data-bssid='" + bssid.bssidAddress + "' " +
+            "data-ssid='" + bssid.ssid + "' " +
+            "data-company='" + bssid.company + "' " +
+            "data-rssi='" + bssid.rssi.toString() + "' " +
             ">";
     }
-    html_ap += "BSSID: <a href='#' onclick='select_tab(\"ap_details\", \"" + BSSID.BSSID_Address + "\")'>"
-        + BSSID.BSSID_Address + "</a><br>"
-        + "SSID: " + BSSID.SSID + "<br>"
-        + "Company: " + BSSID.company + "<br>"
-        + "Channel: " + BSSID.channel + "<br>"
-        + "Country: " + BSSID.country + "<br>"
-        + "RSSI: " + BSSID.RSSI + "dBm<br>"
-        + "Rates: " + BSSID.rates + "<br>"
-        + "Extended Rates: " + BSSID.extended_rates + "<br>"
-        + "Connected Stations: " + BSSID.associated_STA.length + "<br>"
-        + "Raw Data: " + BSSID.beacon + "<br>"
-        + "Last Update: " + BSSID.last_update;
+    if (bssid.beacon.capabilitiesInfo.privacy){
+         lock = "fa-lock";
+    } else {
+         lock = "fa-unlock";
+    }
+    html_ap += "<span>" + bssid.ssid + " <i class='fa " + lock + "'></i></span><br/>"
+        + "BSSID: <a href='#' onclick='select_tab(\"ap_details\", \"" + bssid.bssidAddress + "\")'>"
+        + bssid.bssidAddress + "</a><br>"
+        + "Company: " + bssid.company + "<br>"
+        + "Channel: " + bssid.channel + "<br>"
+        + "Country: " + bssid.country + "<br>"
+        + "RSSI: " + bssid.rssi + "dBm<br>"
+        + "Rates: " + bssid.rates + "<br>"
+        + "Extended Rates: " + bssid.extended_rates + "<br>"
+        + "Connected Stations: " + bssid.associatedStations.length + "<br>"
+        + "Last Update: " + bssid.last_update;
     if (is_new_ap) {
         html_ap += "</div>";
     }
     return html_ap;
 }
 
-function tab_ap_details(BSSID_Address) {
-    var BSSID = BSSIDList[BSSID_Address];
-    console.log(BSSID);
-    $("#nav_display_ssid").addClass("nav_selected");
+function tab_ap_details(bssidAddress) {
+    var bssid = bssidList[bssidAddress];
+    //console.log(BSSID);
     var html = "<article id='ap_details' style='float: left'>" +
-        "<h2><i class='fa fa-wifi fa-lg'>" + BSSID.SSID + " - " + BSSID.BSSID_Address + "</i></h2>" +
+        "<h2><i class='fa fa-wifi fa-lg'>" + bssid.ssid + " on " + bssid.bssidAddress + "</i></h2>" +
         "<div style='float: left; width: 100%'>" +
             "<div style='float: left; width: 50%'>" +
-            "Company: " + BSSID.company + " (" + BSSID.OUI + ")<br>" +
+            "Company: " + bssid.company + " (" + bssid.oui + ")<br>" +
             "<br>" +
-            "RSSI: " + BSSID.RSSI + "<br>" +
-            'Channel: ' + BSSID.channel +
+            "RSSI: " + bssid.RSSI + "<br>" +
+            'Channel: ' + bssid.channel +
             '</div>' +
             '<div>' +
-            'Associated Stations: ' + "<span class='badge'>" + BSSID.associated_STA.length + "</span>";
-    for (var STA in BSSID.associated_STA) {
-        var current_STA = BSSID.associated_STA[STA];
-        html += '<div id="' + current_STA + '" style="padding-left:20px">' +
-            current_STA + ' (' + STAList[current_STA].RSSI + ' dBm)</div>';
+            'Associated Stations: ' + "<span class='badge'>" + bssid.associatedStations.length + "</span>";
+    for (var station in bssid.associatedStations) {
+        var currentStation = bssid.associatedStations[station];
+        html += '<div id="' + currentStation + '" style="padding-left:20px">' +
+            currentStation + ' (' + stationList[currentStation].rssi + ' dBm)</div>';
     }
     html += "</div>" +
         "</div>" +
         "<div style='float: left; width: 100%'><h3>Beacon Informations</h3>" +
             "<div style='float: left; width: 50%'>" +
             "<h4>Fixed Parameters</h4>" +
-            "Beacon interval: " + BSSID.beacon.beaconInt + '<br>';
-    for (var capa in BSSID.beacon.capabilitiesInfo) {
-        html += "<div>" + capa + ": " + BSSID.beacon.capabilitiesInfo[capa] + "</div>";
+            "Beacon interval: " + bssid.beacon.beaconInt + '<br>';
+    for (var capa in bssid.beacon.capabilitiesInfo) {
+        html += "<div>" + capa + ": " + bssid.beacon.capabilitiesInfo[capa] + "</div>";
     }
     html += "</div>" +
         "<div style='float: left; width: 50%'><h4>Tagged Parameters</h4>";
-    html += display_tags(BSSID);
+    html += display_tags(bssid);
     html += "</div></div></article>";
     return html;
 }
 
-function display_tags(BSSID) {
+function display_tags(bssid) {
     var html = '';
-    for (var tag_index in BSSID.beacon.tags) {
+    for (var tag_index in bssid.beacon.tags) {
         html += '<div>';
-        var tag = BSSID.beacon.tags[tag_index];
+        var tag = bssid.beacon.tags[tag_index];
         switch (tag.typeId) {
             case 0:
                 html += "<span class='label label-default'>SSID parameter set </span><br>" +
                     "Tag Number: " + tag.typeId + "<br>" +
-                    "SSID: " + tag.ssid + "<br>";
+                    "ssid: " + tag.ssid + "<br>";
                 break;
             case 1:
                 html += "<span class='label label-default'>Supported Rates</span><br>" +
@@ -128,7 +133,7 @@ function display_tags(BSSID) {
                     'Group Cipher Suite OUI: ' + gcs.oui + '<br>' +
                     'Group Cipher Suite Type: ' + gcs.suite + '<br>';
                 var pcs_count = tag.capabilities.pairwise_cipher_suite_count;
-                "Pairwise Cipher Suite Count: " + pcs_count + "<br>";
+                html += "Pairwise Cipher Suite Count: " + pcs_count + "<br>";
                 for (var i = 0; i < pcs_count; i++) {
                     var pcs = CipherSuite(tag.capabilities.pairwise_cipher_suite_list[i]);
                     html += "Pairwise Cipher Suite " + pcs_count + ": <br> " +

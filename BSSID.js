@@ -1,15 +1,15 @@
-function BSSID(BSSID_Address, RSSI, payload, ieeeMAC) {
-    this.BSSID_Address = BSSID_Address;
-    this.associated_STA = [];
-    this.OUI = this.BSSID_Address.replace(/:/g, '').substr(0, 6).toUpperCase();
-    this.company = ieeeMAC[this.OUI] || "Unknown";
-    this.RSSI = RSSI;
+function BSSID(bssidAddress, rssi, payload, ieeeMAC) {
+    this.bssidAddress = bssidAddress;
+    this.associatedStations = [];
+    this.oui = this.bssidAddress.replace(/:/g, '').substr(0, 6).toUpperCase();
+    this.company = ieeeMAC[this.oui] || "Unknown";
+    this.rssi = rssi;
 
     this.beaconInt = payload.beacon.beaconInt;
     this.capabilitiesInfo = payload.beacon.capabilitiesInfo;
 
 
-    this.SSID = undefined;
+    this.ssid = undefined;
     this.rates = undefined;
     this.channel = undefined;
     this.extended_rates = undefined;
@@ -23,10 +23,10 @@ function BSSID(BSSID_Address, RSSI, payload, ieeeMAC) {
         for (var tag in payload.beacon.tags) {
             if (payload.beacon.tags[tag].hasOwnProperty("type")) {
                 switch (payload.beacon.tags[tag].typeId) {
-                    //SSID
+                    //ssid
                     case 0:
                         //		    console.log(payload.beacon.tags[tag].ssid);
-                        this.SSID = payload.beacon.tags[tag].ssid;
+                        this.ssid = payload.beacon.tags[tag].ssid;
                         break;
                     //rates
                     case 1:

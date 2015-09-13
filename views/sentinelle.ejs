@@ -9,20 +9,24 @@
     <title>Sentinelle</title>
     <!-- JQuery -->
     <script type='text/javascript' src='./js/lib/jquery-2.1.1.min.js'></script>
-    <script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
     <script type='text/javascript' src='./js/lib/bootstrap.min.js'></script>
     <script type='text/javascript' src='./js/lib/slidebars.js'></script>
     <script type='text/javascript' src='./js/lib/jquery.autocomplete.js'></script>
     <script type='text/javascript' src='./js/lib/FaviconAwesome.js'></script>
+    <script type='text/javascript' src="/socket.io/socket.io.js"></script>
+    <script type='text/javascript' src='./js/messenger.js'></script>
     <script type='text/javascript' src='./js/ap.js'></script>
     <script type='text/javascript' src='./js/infra.js'></script>
-    <script type='text/javascript' src="/socket.io/socket.io.js"></script>
+    <script type='text/javascript' src='./js/sta.js'></script>
     <link rel="stylesheet" href="./css/slidebars.css" type="text/css">
     <link rel="stylesheet" href="./css/font-awesome.min.css" type="text/css">
     <link rel="stylesheet" href="./css/bootstrap.min.css" type="text/css">
     <link rel="stylesheet" href="./css/sentinelle.css" type="text/css">
+
 </head>
 <body id="top">
+<script> FaviconAwesome('fa-connectdevelop', '#0093D1'); </script>
+
 <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
     <div class="container" style="width:80%">
         <!-- Logo -->
@@ -124,105 +128,23 @@
         </article>
     </section>
     <section class="sb-site-content" id="section_display">
-
+        <article id='infra_list'><h4>Infra</h4>
+</article>
     </section>
-
-
 </div>
-<!-- mib viewer - this is the right pane to display infos  -->
-<nav id="info_details" class="sb-slidebar sb-right sb-style-push">
-    <div id="info_details_content" style="margin-top: 100px;">
-    </div>
-    <div>
-        <a class='btn menu-link' id="sb-close" style='float: left; padding-right: 10px; padding-top: 10px;'>Close <i
-                    class='fa fa-times-circle'></i></a>
-    </div>
-</nav>
-<script> FaviconAwesome('fa-connectdevelop', '#0093D1'); </script>
+
 <script>
+
+    $(document).ready(select_tab('display_infra'));
 
     var sentinelle_status = "";
     var sort_by = "ssid";
     var sort_order = "asc";
     var current_list = "";
 
-    var BSSIDList = [];
-    var SSIDList = [];
-    var STAList = [];
-
-    var socket = io.connect('http://10.0.10.3:80');
-
-
-    // Socket: Rx
-    socket.on("clear_all", function () {
-        BSSIDList = [];
-        SSIDList = [];
-        STAList = [];
-        $("#ap_list").empty();
-    })
-    socket.on('sentinelle_status', function (status) {
-        sentinelle_status = status;
-        if (sentinelle_status == "running") {
-            $("#sentinelle_status_text").text(sentinelle_status)
-            document.getElementById("sentinelle_status_icon").className = "fa fa-spinner fa-pulse";
-            document.getElementById("sentinelle_action").className = "fa fa-toggle-on fa-lg";
-            document.getElementById("sentinelle_status_btn").className = "label label-success";
-        } else {
-            $("#sentinelle_status_text").text(sentinelle_status);
-            document.getElementById("sentinelle_status_icon").className = "fa fa-spinner";
-            document.getElementById("sentinelle_action").className = "fa fa-toggle-off fa-lg";
-            document.getElementById("sentinelle_status_btn").className = "label label-warning";
-        }
-    })
-    socket.on('SSID', function (action, SSID) {
-        //console.log(SSID.SSID);
-        //console.log(SSID.BSSIDs);
-        SSID.last_update = new Date().toLocaleString();
-        SSIDList[SSID.SSID] = SSID;
-        if (document.getElementById(SSID.SSID) != null) {
-            document.getElementById(SSID.SSID).innerHTML = format_infrastructure(SSID, false);
-        } else {
-            $("#infra_list").append(format_infrastructure(SSID, true));
-        }
-        sortDiv($('#infra_list'), $('#infra_list').find('.infra_list'), sort_by);
-    })
-    socket.on('BSSID', function (action, BSSID) {
-        //console.log(action);
-        BSSID.last_update = new Date().toLocaleString();
-        BSSIDList[BSSID.BSSID_Address] = BSSID;
-        if (document.getElementById('infra_list') != null) {
-            if (SSIDList[BSSID.SSID] != null) {
-                if (document.getElementById(BSSID.SSID) != null) {
-                    document.getElementById(BSSID.SSID).innerHTML = format_infrastructure(SSIDList[BSSID.SSID], false);
-                } else {
-                    $("#infra_list").append(format_infrastructure(SSIDList[BSSID.SSID], true));
-                }
-            }
-            sortDiv($('#infra_list'), $('#infra_list').find('.infra_list'), sort_by);
-        } else if (document.getElementById('ap_list') != null) {
-            if (document.getElementById('ap_' + BSSID.BSSID_Address) != null) {
-                document.getElementById('ap_' + BSSID.BSSID_Address).innerHTML = format_ap_list(BSSID, false);
-            } else {
-                $("#ap_list").append(format_ap_list(BSSID, true));
-            }
-            sortDiv($('#ap_list'), $('#ap_list').find('.ap_list'), sort_by);
-        }
-    })
-    socket.on("STA", function (action, STA) {
-        STA['last_update'] = new Date().toLocaleString();
-        STAList[STA.MAC] = STA;
-        //console.log(action);
-        //console.log(STA);
-    })
-
-    // Control the sensor
-    function start_stop() {
-        if (sentinelle_status == "running") {
-            socket.emit("stop");
-        } else {
-            socket.emit("start");
-        }
-    }
+    var bssidList = [];
+    var ssidList = [];
+    var stationList = [];
 
 
     // ascending order
@@ -276,7 +198,6 @@
         var html = "";
         var sort_by_buttons = $("[id^=sort-by]");
         var order_by_buttons = $("[id^=order-by]");
-        $('#section_display').empty();
         sort_by_buttons.prop('disabled', true);
         sort_by_buttons.removeClass("btn-selected");
         order_by_buttons.prop('disabled', true);
@@ -317,6 +238,13 @@
             case "display_sta":
                 current_list = "sta_list";
                 $("#nav_display_sta").addClass("nav_selected");
+
+                html = tab_sta();
+                break;
+            case "sta_details":
+                $("#nav_display_sta").addClass("nav_selected");
+
+                html = tab_sta_details(param);
                 break;
             case "display_config":
                 $("#nav_display_config").addClass("nav_selected");
@@ -325,10 +253,8 @@
                 $("#nav_display_about").addClass("nav_selected");
                 break;
         }
-
-        $('#section_display').append(html);
+        $('#section_display').empty().append(html);
         sortDiv();
-
     }
 
     // sort the displayed items
@@ -347,9 +273,92 @@
         sortDiv();
     }
 
-    $(document).ready(function () {
-        select_tab('display_infra');
+    var socket = io.connect('http://10.0.10.3:80');
+
+    // Socket: Rx
+    socket.on("clear_all", function () {
+        bssidList = [];
+        ssidList = [];
+        stationList = [];
+        $("#section_display").empty();
     })
+            .on('sentinelle_status', function (status) {
+                sentinelle_status = status;
+                if (sentinelle_status == "running") {
+                    $("#sentinelle_status_text").text(sentinelle_status);
+                    document.getElementById("sentinelle_status_icon").className = "fa fa-spinner fa-pulse";
+                    document.getElementById("sentinelle_action").className = "fa fa-toggle-on fa-lg";
+                    document.getElementById("sentinelle_status_btn").className = "label label-success";
+                } else {
+                    $("#sentinelle_status_text").text(sentinelle_status);
+                    document.getElementById("sentinelle_status_icon").className = "fa fa-spinner";
+                    document.getElementById("sentinelle_action").className = "fa fa-toggle-off fa-lg";
+                    document.getElementById("sentinelle_status_btn").className = "label label-warning";
+                }
+            })
+            .on('SSID', function (action, ssid) {
+                //console.log(ssid.ssid);
+                //console.log(ssid.bssidList);
+                ssid.last_update = new Date().toLocaleString();
+                ssidList[ssid.ssid] = ssid;
+                if (document.getElementById('infra_list') != null) {
+                    if (document.getElementById(ssid.ssid) != null) {
+                        document.getElementById(ssid.ssid).innerHTML = format_infrastructure(ssid, false);
+                    } else {
+                        $("#infra_list").append(format_infrastructure(ssid, true));
+                    }
+                    sortDiv();
+                }
+            })
+            .on('BSSID', function (action, bssid) {
+                //console.log(action);
+                bssid.last_update = new Date().toLocaleString();
+                bssidList[bssid.bssidAddress] = bssid;
+                if (document.getElementById('infra_list') != null) {
+                    if (ssidList[bssid.ssid] != null) {
+                        if (document.getElementById(bssid.ssid) != null) {
+                            document.getElementById(bssid.ssid).innerHTML = format_infrastructure(ssidList[bssid.ssid], false);
+                        } else {
+                            $("#infra_list").append(format_infrastructure(ssidList[bssid.ssid], true));
+                        }
+                    }
+                    sortDiv();
+                } else if (document.getElementById('ap_list') != null) {
+                    if (document.getElementById(bssid.bssidAddress) != null) {
+                        document.getElementById(bssid.bssidAddress).innerHTML = format_ap_list(bssid, false);
+                    } else {
+                        $("#ap_list").append(format_ap_list(bssid, true));
+                    }
+                    sortDiv();
+                }
+            })
+            .on("STA", function (action, station) {
+                station['last_update'] = new Date().toLocaleString();
+                stationList[station.mac] = station;
+                //console.log(action);
+                //console.log(STA);
+                if (document.getElementById('sta_list') != null) {
+                    if (document.getElementById(station.mac) != null) {
+                        document.getElementById(station.mac).innerHTML = format_sta_list(station, false);
+                    } else {
+                        $("#sta_list").append(format_sta_list(station, true));
+                    }
+                    //sortDiv();
+                }
+            })
+            .on("test", function (test) {
+                console.log(test);
+            });
+
+    // Control the sensor
+    function start_stop() {
+        if (sentinelle_status == "running") {
+            socket.emit("stop");
+        } else {
+            socket.emit("start");
+        }
+    }
+
 
 </script>
 </body>
