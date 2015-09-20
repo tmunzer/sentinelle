@@ -91,10 +91,25 @@ IPv4.prototype.decode = function (raw_packet, offset) {
     offset = orig_offset + this.headerLength;
 
     var ProtocolDecoder = protocols[this.protocol];
-    if(ProtocolDecoder === undefined) {
-        this.protocolName = "Unknown";
-    } else {
-        this.payload = new ProtocolDecoder(this.emitter).decode(raw_packet, offset, this.length - this.headerLength);
+    switch (ProtocolDecoder) {
+        case protocols[1]:
+            this.protocolName = "ICMP";
+            this.icmp = new ProtocolDecoder(this.emitter).decode(raw_packet, offset, this.length - this.headerLength);
+            break;
+        case protocols[6]:
+            this.protocolName = "TCP";
+            this.tcp = new ProtocolDecoder(this.emitter).decode(raw_packet, offset, this.length - this.headerLength);
+            break;
+        case protocols[17]:
+            this.protocolName = "UDP";
+            this.udp = new ProtocolDecoder(this.emitter).decode(raw_packet, offset, this.length - this.headerLength);
+            break;
+        case "unknown":
+            this.protocolName = "Unknown";
+            break;
+        default:
+            this.payload = new ProtocolDecoder(this.emitter).decode(raw_packet, offset, this.length - this.headerLength);
+            break;
     }
 
     if(this.emitter) { this.emitter.emit("ipv4", this); }

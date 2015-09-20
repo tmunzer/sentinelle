@@ -34,7 +34,7 @@ function PcapSession(is_live, device_name, filter, buffer_size, outfile, is_moni
     if (typeof this.buffer_size === "number" && !isNaN(this.buffer_size)) {
         this.buffer_size = Math.round(this.buffer_size);
     } else {
-        this.buffer_size = 10 * 1024 * 1024; // Default buffer size is 10MB
+        this.buffer_size = 50 * 1024 * 1024; // Default buffer size is 10MB
     }
 
     var self = this;
@@ -99,7 +99,7 @@ PcapSession.prototype.on_packet_ready = function () {
         var full_packet = new PacketWithHeader(this.buf, this.header, this.link_type);
         this.emit("packet", full_packet);
     } catch (e) {
-        console.log("buffer error");
+        console.log("buffer error " + e);
     }
 };
 

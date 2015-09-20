@@ -23,6 +23,9 @@ UDP.prototype.decode = function (raw_packet, offset) {
     this.data = raw_packet.slice(offset, offset + (this.length - 8));
 
     if(this.emitter) { this.emitter.emit("udp", this); }
+    if (this.sport === 53 || this.dport === 53) {
+        this.dns = new DNS(this.emitter).decode(this.data, 0);
+    }
     return this;
 };
 

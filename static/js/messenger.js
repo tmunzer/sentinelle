@@ -16,9 +16,13 @@ socket.on("clear_all", function () {
             document.getElementById("sentinelle_status_btn").className = "label label-success";
         } else {
             $("#sentinelle_status_text").text(sentinelle_status);
-            document.getElementById("sentinelle_status_icon").className = "fa fa-spinner";
-            document.getElementById("sentinelle_action").className = "fa fa-toggle-off fa-lg";
-            document.getElementById("sentinelle_status_btn").className = "label label-warning";
+            try {
+                document.getElementById("sentinelle_status_icon").className = "fa fa-spinner";
+                document.getElementById("sentinelle_action").className = "fa fa-toggle-off fa-lg";
+                document.getElementById("sentinelle_status_btn").className = "label label-warning";
+            } catch (e) {
+                console.log(e);
+            }
         }
     })
     .on('SSID', function (action, ssid) {

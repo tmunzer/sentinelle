@@ -65,11 +65,11 @@ RadioPacket.prototype.decode = function (raw_packet, offset) {
 
     this.headerRevision = raw_packet[offset++];
     this.headerPad = raw_packet[offset++];
-    this.headerLength = raw_packet.readUInt16LE(offset); offset += 2;
+    this.headerLength = raw_packet.readUInt16LE(offset, true); offset += 2;
 
     //Present Flags
     this.presentFields = new PresentFieldFlags().decode(
-        raw_packet.readUInt32LE(offset));
+        raw_packet.readUInt32LE(offset, true));
     offset += 4;
 
     //alias presentFields as it will be used a lot
@@ -89,20 +89,19 @@ RadioPacket.prototype.decode = function (raw_packet, offset) {
 
     if(p.channel) {
         //Frequency
-        this.frequency = raw_packet.readUInt16LE(offset);
-        offset += 2;
+        this.frequency = raw_packet.readUInt16LE(offset, true);
         //channel flags are the 2 bytes after channel freq
-        offset +=2;
+        offset += 4;
     }
 
     if(p.fhss) { offset += 2; }
 
     if(p.signalStrength) { //in dbm
-        this.signalStrength = raw_packet.readInt8(offset++);
+        this.signalStrength = raw_packet.readInt8(offset++, true);
     }
 
     if(p.signalNoise) { //in dbm
-        this.signalNoise = raw_packet.readInt8(offset++);
+        this.signalNoise = raw_packet.readInt8(offset++), true;
     }
     if(p.lockQuality) { offset += 2; }
     if(p.txAttenuation) { offset++; }

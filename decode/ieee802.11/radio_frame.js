@@ -100,22 +100,30 @@ RadioFrame.prototype.decode = function (raw_packet, offset) {
         this.fragSeq = raw_packet.readUInt16BE(offset, true);
         offset += 2;
 
-        if (this.type === 0) {
-            switch (this.subType) {
-                case 4:
-                    this.probe = new RadioProbeFrame().decode(raw_packet, offset);
-                    break;
-                case 8: // Beacon
-                    this.beacon = new RadioBeaconFrame().decode(raw_packet, offset);
-                    break;
-            }
-
-        } else if (this.type === 2) { // Data Frame
-            if (!this.flags.encrypted && this.subType !== 36) { // subType 36 is a null data frame
-                this.llc = new LogicalLinkControl(this.emitter).decode(raw_packet, offset);
-            }
+        switch (this.type) {
+            case 0:
+                switch (this.subType) {
+                    case 4:
+                        this.probe = new RadioProbeFrame().decode(raw_packet, offset);
+                        break;
+                    case 8: // Beacon
+                        this.beacon = new RadioBeaconFrame().decode(raw_packet, offset);
+                        break;
+                }
+                break;
+            case 2:  // Data Frame
+                if (!this.flags.encrypted){
+                    if (this.subType == 8){
+                        offset += 2;
+                    }
+                    if (this.subType == 0 || this.subType == 8) { // 0 = Data 8 = QoS Data
+                        this.llc = new LogicalLinkControl(this.emitter).decode(raw_packet, offset);
+                    }
+                }
+                break;
         }
     }
+
     if (this.emitter) {
         this.emitter.emit("radio-frame", this);
     }

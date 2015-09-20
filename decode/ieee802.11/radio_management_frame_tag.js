@@ -33,10 +33,15 @@ RadioManagementFrameTag.prototype.decode = function decode(raw_packet, offset) {
             break;
         case 32:
             this.type = "power_constraint"; //802.11h
+            this.localPowerContraint = raw_packet[offset];
             break;
         case 33:
             this.type = "mobility_domain"; //802.11r
             break;
+        case 35:
+            this.type = "TPC Report";
+            this.txPower = parseInt(raw_packet.slice(offset, offset + 1));
+            this.linkMargin = parseInt(raw_packet.slice(offset + 1, offset + 2));
         case 42:
             this.type = "ERP"; //Extended Rates PHY
             break;

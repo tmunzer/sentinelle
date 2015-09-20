@@ -18,8 +18,9 @@ LogicalLinkControl.prototype.decode = function (raw_packet, offset) {
     // http://tools.ietf.org/html/rfc1700
     // 0xaa is SNAP
     // 0x00 is NULL LSAP
-    if (((this.dsap === 0xaa) && (this.ssap === 0xaa)) ||
-        ((this.dsap === 0x00) && (this.ssap === 0x00))) {
+    if (((this.dsap === 0xaa) && (this.ssap === 0xaa))
+        || ((this.dsap === 0x00) && (this.ssap === 0x00))
+        ) {
         this.controlField = raw_packet[offset++];
         this.orgCode = [
             raw_packet[offset++],
@@ -27,10 +28,9 @@ LogicalLinkControl.prototype.decode = function (raw_packet, offset) {
             raw_packet[offset++]
         ];
         this.type = raw_packet.readUInt16BE(offset); offset += 2;
-
         switch (this.type) {
         case 0x0800: // IPv4
-            this.payload = new IPv4(this.emitter).decode(raw_packet, offset);
+            this.ipv4 = new IPv4(this.emitter).decode(raw_packet, offset);
             break;
         }
     } else {
